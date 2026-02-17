@@ -8,9 +8,10 @@ import uuid
 
 # --- Configuration ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-BLOCKS_DB = os.path.join(BASE_DIR, 'blocks.json')
-PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
-CONFIG_FILE = os.path.join(BASE_DIR, 'apartments.json')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+BLOCKS_DB = os.path.join(DATA_DIR, 'blocks.json')
+PUBLIC_DIR = os.path.join(DATA_DIR, 'public')
+CONFIG_FILE = os.path.join(DATA_DIR, 'apartments.json')
 
 def load_config():
     try:

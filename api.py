@@ -167,7 +167,7 @@ async def serve_ics_file(filename: str):
     Serve generated ICS files (public calendar feeds).
     No authentication required so Airbnb/Booking can fetch them.
     """
-    filepath = os.path.join(BASE_DIR, "public", filename)
+    filepath = os.path.join(BASE_DIR, "data", "public", filename)
 
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="File not found")

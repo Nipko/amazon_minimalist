@@ -10,7 +10,8 @@ from dateutil.rrule import rrulestr
 
 # --- Configuration ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(BASE_DIR, 'apartments.json')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+CONFIG_FILE = os.path.join(DATA_DIR, 'apartments.json')
 
 def load_config():
     try:

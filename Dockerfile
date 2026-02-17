@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create public directory for ICS files
-RUN mkdir -p /app/public
+# Create data directories (will be overridden by volume mount in production)
+RUN mkdir -p /app/data/public
 
 # Expose the API port
 EXPOSE 8000
