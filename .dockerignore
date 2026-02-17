@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.git
+.gitignore
+.env
+*.png
+*.svg
+Logo.*
+logo_*
+square-image.*
+run_tests.py
+README.md
+DEPLOY.md
+.dockerignore

@@ -1,0 +1,16 @@
+{
+  "amazon_minimalist": {
+    "name": "Amazon Minimalist",
+    "sources": [
+      "https://ical.booking.com/v1/export?t=d2bea7e9-4504-4b78-93f6-d912742699bb",
+      "https://www.airbnb.com.co/calendar/ical/889355087756776458.ics?t=d0bb7e2bad9c49c2890f98817e20ea3d"
+    ]
+  },
+  "family_amazon_minimalist": {
+    "name": "Family Amazon Minimalist",
+    "sources": [
+      "https://ical.booking.com/v1/export?t=6a65109a-2f0f-4d70-879e-257f7c545362",
+      "https://www.airbnb.com.co/calendar/ical/1064816489107181667.ics?t=2400eb210ad2479ab03ac1f6235d3ed9"
+    ]
+  }
+}
