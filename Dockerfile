@@ -10,11 +10,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create data directories (will be overridden by volume mount in production)
+# Store defaults so they can be copied to empty volume on first run
+RUN mkdir -p /app/defaults && cp /app/data/apartments.json /app/defaults/
+
+# Create data directories
 RUN mkdir -p /app/data/public
+
+# Make startup script executable
+RUN chmod +x /app/start.sh
 
 # Expose the API port
 EXPOSE 8000
 
-# Run the API server
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use startup script that initializes data volume
+CMD ["/app/start.sh"]
