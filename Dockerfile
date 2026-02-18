@@ -11,7 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Store defaults so they can be copied to empty volume on first run
-RUN mkdir -p /app/defaults && cp /app/data/apartments.json /app/defaults/
+RUN mkdir -p /app/defaults && \
+    cp /app/data/apartments.json /app/defaults/ && \
+    cp /app/data/apartments_details.json /app/defaults/
 
 # Create data directories
 RUN mkdir -p /app/data/public
