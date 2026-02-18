@@ -1,0 +1,304 @@
+{
+    "amazon_minimalist": {
+        "name": "Amazon Minimalist",
+        "rnt": "185828",
+        "description": "Apartamento estilo minimalista, recién renovado, ubicado en un segundo piso con acceso independiente. Ideal para parejas o viajeros solos que buscan comodidad y tranquilidad en Leticia, puerta de entrada al Amazonas colombiano.",
+        "location": {
+            "address": "Transversal 3a #14-111, Barrio San José/Simón Bolívar",
+            "city": "Leticia",
+            "department": "Amazonas",
+            "country": "Colombia",
+            "reference": "Casa Amarilla de 2 pisos",
+            "google_maps": "https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA",
+            "near_airport": true,
+            "airport_distance": "~1 km del Aeropuerto Alfredo Vásquez Cobo"
+        },
+        "capacity": {
+            "max_guests": 3,
+            "bedrooms": 1,
+            "beds": [
+                {
+                    "type": "Cama doble",
+                    "size": "1.40m"
+                },
+                {
+                    "type": "Sofá cama",
+                    "size": "1m",
+                    "location": "Sala"
+                }
+            ],
+            "bathrooms": 1
+        },
+        "pricing": {
+            "currency": "COP",
+            "base_price_per_night": 180000,
+            "discount_by_guests": {
+                "3_guests": 180000,
+                "2_guests": 170000,
+                "1_guest": 150000
+            },
+            "discount_by_stay": {
+                "5_plus_nights": "10% sobre el total",
+                "10_to_15_nights": "15% sobre el total",
+                "30_plus_nights": "30% sobre el total"
+            },
+            "discount_policy": "Solo aplicar descuentos si el huésped lo solicita explícitamente. No ofrecer antes.",
+            "cleaning_during_stay": 40000,
+            "cleaning_note": "No se hace limpieza durante la estadía. Se puede solicitar con costo adicional de 40.000 COP.",
+            "early_checkin_fee": 10000,
+            "late_checkout_fee": 10000,
+            "early_late_note": "Sujeto a disponibilidad. Se debe consultar antes para aprobación.",
+            "deposit_policy": "Anticipo del 20% del total si la estadía es de más de 4 noches.",
+            "sheet_change": "Cambio de sábanas cada 6 días si el huésped lo desea."
+        },
+        "payment_methods": {
+            "cash": "Pesos Colombianos",
+            "bank_transfers": {
+                "llave_breb": "1117509614",
+                "bancolombia": {
+                    "type": "Cuenta de Ahorros",
+                    "number": "174-803785-98",
+                    "holder": "Nir Levin Bermudez"
+                },
+                "nequi": {
+                    "type": "Cuenta Ahorros",
+                    "number": "3208010737"
+                }
+            },
+            "international": {
+                "paypal": "nirlevin89@gmail.com",
+                "currency": "USD",
+                "note": "Enviar el total libre de comisiones. La TRM se aplica el día de la transferencia."
+            }
+        },
+        "amenities": [
+            "Aire acondicionado",
+            "WiFi fibra óptica",
+            "Smart TV con canales TDT e internet",
+            "Agua caliente",
+            "Cocina equipada (ollas, vasos, jarra, sartén, estufa, platos, cubiertos, cuchillo)",
+            "Cafetera",
+            "Licuadora",
+            "Mini nevera",
+            "Sofá",
+            "Comedor / puesto de trabajo",
+            "Balcón compartido con sillas mecedoras",
+            "Ventilador",
+            "Sillas altas",
+            "Toallas",
+            "Jabón de ducha y jabón de manos",
+            "Sábanas y almohadas",
+            "Guardarropa y ganchos de ropa",
+            "Detector de humo y monóxido de carbono",
+            "Extintor y botiquín de primeros auxilios",
+            "Implementos de aseo (escoba, trapero, recogedor)",
+            "Parqueadero para motos (gratis)"
+        ],
+        "check_in_time": "15:00",
+        "check_out_time": "11:00",
+        "luggage_storage": "Se puede guardar equipaje antes del check-in y después del check-out sin costo. Debe solicitarse con anticipación.",
+        "rules": [
+            "No fiestas",
+            "Horas de silencio: 10:00 PM a 8:00 AM",
+            "No mascotas",
+            "No fumar dentro del apartamento",
+            "No utilizar las toallas para limpiar zapatos o barro",
+            "Apagar aires acondicionados al salir del apartamento",
+            "Mantener la puerta cerrada cuando se use el aire acondicionado",
+            "Apagar las luces exteriores antes de acostarse"
+        ],
+        "photos": [
+            "Casa_frente.jpg",
+            "entrada_casa.jpg",
+            "casa_direccion.jpg",
+            "Sala_entrada.jpg",
+            "Sala.jpg",
+            "sala_completa.jpg",
+            "Sala_cocina.jpg",
+            "cocina.jpg",
+            "comedor_puest_trabajo.jpg",
+            "sofa_cama.jpg",
+            "Sofa_cama_sala.jpg",
+            "habitacion_cama.jpg",
+            "hbaitacion.jpg",
+            "habitacion_tv.jpg",
+            "habitacion_tv_pasaillo.jpg",
+            "baño.jpg",
+            "baño_ducha.jpg",
+            "balcon.jpg",
+            "balcon_mecedoras.jpg",
+            "patio_ropa.jpg"
+        ],
+        "videos": [
+            "video_amazon_minimalist.mp4"
+        ],
+        "social_media": {
+            "instagram": "https://www.instagram.com/amazon_minimalist/",
+            "facebook": "https://www.facebook.com/amazonminimalist",
+            "google_maps": "https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA"
+        }
+    },
+    "family_amazon_minimalist": {
+        "name": "Family Amazon Minimalist",
+        "rnt": "191705",
+        "description": "Apartamento amplio para familias o grupos de hasta 6 personas, recién renovado, ubicado en un segundo piso con acceso independiente. Cuenta con 2 habitaciones y múltiples opciones de camas. Perfecto para familias que desean explorar el Amazonas colombiano con todas las comodidades de hogar.",
+        "location": {
+            "address": "Transversal 3a #14-111, Barrio San José/Simón Bolívar",
+            "city": "Leticia",
+            "department": "Amazonas",
+            "country": "Colombia",
+            "reference": "Casa Amarilla de 2 pisos (contiguo al Amazon Minimalist)",
+            "google_maps": "https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA",
+            "near_airport": true,
+            "airport_distance": "~1 km del Aeropuerto Alfredo Vásquez Cobo"
+        },
+        "capacity": {
+            "max_guests": 6,
+            "bedrooms": 2,
+            "beds": [
+                {
+                    "type": "Cama doble",
+                    "size": "1.40m",
+                    "location": "Habitación 1"
+                },
+                {
+                    "type": "Cama doble",
+                    "size": "1.40m",
+                    "location": "Habitación 2"
+                },
+                {
+                    "type": "Cama sencilla",
+                    "size": "1m",
+                    "location": "Habitación 2"
+                },
+                {
+                    "type": "Sofá cama",
+                    "size": "1m",
+                    "location": "Sala"
+                }
+            ],
+            "bathrooms": 1
+        },
+        "pricing": {
+            "currency": "COP",
+            "base_price_per_night": 290000,
+            "discount_by_guests": {
+                "5_6_guests": 290000,
+                "3_4_guests": 270000,
+                "1_2_guests": 240000
+            },
+            "discount_by_stay": {
+                "5_plus_nights": "10% sobre el total",
+                "10_to_15_nights": "15% sobre el total",
+                "30_plus_nights": "30% sobre el total"
+            },
+            "discount_policy": "Solo aplicar descuentos si el huésped lo solicita explícitamente. No ofrecer antes.",
+            "cleaning_during_stay": 50000,
+            "cleaning_note": "No se hace limpieza durante la estadía. Se puede solicitar con costo adicional de 50.000 COP.",
+            "early_checkin_fee": 10000,
+            "late_checkout_fee": 10000,
+            "early_late_note": "Sujeto a disponibilidad. Se debe consultar antes para aprobación.",
+            "deposit_policy": "Anticipo del 20% del total si la estadía es de más de 4 noches.",
+            "sheet_change": "Cambio de sábanas cada 6 días si el huésped lo desea."
+        },
+        "payment_methods": {
+            "cash": "Pesos Colombianos",
+            "bank_transfers": {
+                "llave_breb": "1117509614",
+                "bancolombia": {
+                    "type": "Cuenta de Ahorros",
+                    "number": "174-803785-98",
+                    "holder": "Nir Levin Bermudez"
+                },
+                "nequi": {
+                    "type": "Cuenta Ahorros",
+                    "number": "3208010737"
+                }
+            },
+            "international": {
+                "paypal": "nirlevin89@gmail.com",
+                "currency": "USD",
+                "note": "Enviar el total libre de comisiones. La TRM se aplica el día de la transferencia."
+            }
+        },
+        "amenities": [
+            "Aire acondicionado en habitaciones",
+            "WiFi fibra óptica",
+            "Smart TV 40\" con canales TDT e internet",
+            "Cocina equipada (ollas, vasos, jarra, sartén, estufa, platos, cubiertos, cuchillo)",
+            "Cafetera",
+            "Licuadora",
+            "Mini nevera",
+            "Sofá",
+            "Comedor",
+            "Balcón compartido con sillas mecedoras",
+            "Ventilador",
+            "Sillas altas",
+            "Toallas",
+            "Jabón de ducha y jabón de manos",
+            "Sábanas y almohadas",
+            "Guardarropa y ganchos de ropa",
+            "Detector de humo y monóxido de carbono",
+            "Extintor y botiquín de primeros auxilios",
+            "Implementos de aseo (escoba, trapero, recogedor)",
+            "Parqueadero para motos (gratis)"
+        ],
+        "hot_water": false,
+        "photos": [
+            "Casa_frente.jpg",
+            "entrada_casa.jpg",
+            "casa_direccion.jpg",
+            "Entrada.jpg",
+            "Sala_principal.jpg",
+            "Sala_01.jpg",
+            "Sala_estar.jpg",
+            "Sala_tv.jpg",
+            "Sala_cocina.jpg",
+            "Cocina.jpg",
+            "Comedor.jpg",
+            "Sofa_cama.jpg",
+            "Tv_pasillo.jpg",
+            "Habitacion_1_camas.jpg",
+            "habitacion_1_camas_01.jpg",
+            "habitacion_1_closet.jpg",
+            "habitacion_1_completa.jpg",
+            "habitacion_2.jpg",
+            "habitacion_2_cama.jpg",
+            "Baño_01.jpg",
+            "baño_02.jpg",
+            "baño_03.jpg",
+            "balcon.jpg",
+            "balcon_mecedoras.jpg",
+            "Patio_ropas.jpg"
+        ],
+        "videos": [
+            "video_family_amazon_minimalist.mp4"
+        ],
+        "social_media": {
+            "instagram": "https://www.instagram.com/amazon_minimalist/",
+            "facebook": "https://www.facebook.com/amazonminimalist",
+            "google_maps": "https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA"
+        }
+    },
+    "legal": {
+        "escnna_warning": "En Colombia la explotación y el abuso sexual de menores de edad son sancionados con pena privativa de la libertad, conforme a la Ley 679 de 2001",
+        "minor_policy": "Si un menor viaja con un adulto que no es su padre, se debe exigir un permiso autenticado por ambos padres.",
+        "tra_colombians": [
+            "Nombres y apellidos completos",
+            "Tipo y número de documento",
+            "Nacionalidad y lugar de residencia",
+            "Motivo del viaje"
+        ],
+        "tra_foreigners": [
+            "Nombres y apellidos completos (como figuran en pasaporte)",
+            "Nacionalidad",
+            "Fecha de nacimiento",
+            "Género",
+            "Número de contacto y correo electrónico",
+            "Motivo del alojamiento",
+            "Ciudad/país de procedencia",
+            "Ciudad/país de destino"
+        ]
+    },
+    "cross_apartment_policy": "Si un apartamento no tiene disponibilidad completa para las fechas solicitadas pero el otro sí, se puede ofrecer la opción de cambiar de apartamento (ambos son contiguos). Se mantiene el mismo precio. Aplica solo si no se supera la capacidad máxima del apartamento ofrecido. El huésped debe aceptar esta opción."
+}

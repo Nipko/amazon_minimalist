@@ -1,0 +1,231 @@
+{
+    "info": {
+        "name": "Availability Checker API",
+        "description": "API para consultar disponibilidad de apartamentos (Airbnb/Booking.com)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "apikey",
+        "apikey": [
+            {
+                "key": "key",
+                "value": "X-API-Key",
+                "type": "string"
+            },
+            {
+                "key": "value",
+                "value": "9jnblHkZ13ykPnrn7h0hoDdctA_5ypTtx7w0inJi6YI",
+                "type": "string"
+            },
+            {
+                "key": "in",
+                "value": "header",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://availability-api.parallext.cloud",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Health Check",
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/health",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                },
+                "description": "Verifica que la API está funcionando. No requiere API Key."
+            }
+        },
+        {
+            "name": "Listar Apartamentos",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/apartments",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "apartments"
+                    ]
+                },
+                "description": "Lista todos los apartamentos configurados."
+            }
+        },
+        {
+            "name": "Consultar Disponibilidad",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/availability?apt=amazon_minimalist&start=2026-03-01&end=2026-03-05",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "availability"
+                    ],
+                    "query": [
+                        {
+                            "key": "apt",
+                            "value": "amazon_minimalist",
+                            "description": "ID del apartamento"
+                        },
+                        {
+                            "key": "start",
+                            "value": "2026-03-01",
+                            "description": "Fecha check-in (YYYY-MM-DD)"
+                        },
+                        {
+                            "key": "end",
+                            "value": "2026-03-05",
+                            "description": "Fecha check-out (YYYY-MM-DD)"
+                        }
+                    ]
+                },
+                "description": "Consulta la disponibilidad de un apartamento para un rango de fechas."
+            }
+        },
+        {
+            "name": "Consultar Disponibilidad - Family",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/availability?apt=family_amazon_minimalist&start=2026-04-10&end=2026-04-15",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "availability"
+                    ],
+                    "query": [
+                        {
+                            "key": "apt",
+                            "value": "family_amazon_minimalist",
+                            "description": "ID del apartamento Family"
+                        },
+                        {
+                            "key": "start",
+                            "value": "2026-04-10",
+                            "description": "Fecha check-in"
+                        },
+                        {
+                            "key": "end",
+                            "value": "2026-04-15",
+                            "description": "Fecha check-out"
+                        }
+                    ]
+                },
+                "description": "Consulta disponibilidad del apartamento Family Amazon Minimalist."
+            }
+        },
+        {
+            "name": "Agregar Bloqueo Manual",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"apt\": \"amazon_minimalist\",\n  \"start\": \"2026-05-01\",\n  \"end\": \"2026-05-05\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/blocks",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "blocks"
+                    ]
+                },
+                "description": "Agrega un bloqueo manual para un apartamento. Regenera el archivo ICS."
+            }
+        },
+        {
+            "name": "Eliminar Bloqueo",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"apt\": \"amazon_minimalist\",\n  \"start\": \"2026-05-01\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/blocks",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "blocks"
+                    ]
+                },
+                "description": "Elimina un bloqueo manual por fecha de inicio. Regenera el archivo ICS."
+            }
+        },
+        {
+            "name": "Listar Bloqueos",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/blocks/amazon_minimalist",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "blocks",
+                        "amazon_minimalist"
+                    ]
+                },
+                "description": "Lista todos los bloqueos manuales de un apartamento."
+            }
+        },
+        {
+            "name": "Test Sin API Key (debe dar 403)",
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/apartments",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "apartments"
+                    ]
+                },
+                "description": "Prueba de seguridad: debe retornar 403 Forbidden sin API Key."
+            }
+        }
+    ]
+}
