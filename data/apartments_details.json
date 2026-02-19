@@ -109,18 +109,14 @@
         ],
         "photos": [
             "Casa_frente.jpg",
-            "entrada_casa.jpg",
-            "casa_direccion.jpg",
             "Sala_entrada.jpg",
             "Sala.jpg",
-            "sala_completa.jpg",
             "Sala_cocina.jpg",
             "cocina.jpg",
             "comedor_puest_trabajo.jpg",
             "sofa_cama.jpg",
             "Sofa_cama_sala.jpg",
             "habitacion_cama.jpg",
-            "hbaitacion.jpg",
             "habitacion_tv.jpg",
             "habitacion_tv_pasaillo.jpg",
             "baño.jpg",
@@ -129,9 +125,7 @@
             "balcon_mecedoras.jpg",
             "patio_ropa.jpg"
         ],
-        "videos": [
-            "video_amazon_minimalist.mp4"
-        ],
+        "videos": [],
         "social_media": {
             "instagram": "https://www.instagram.com/amazon_minimalist/",
             "facebook": "https://www.facebook.com/amazonminimalist",
@@ -246,34 +240,24 @@
         "hot_water": false,
         "photos": [
             "Casa_frente.jpg",
-            "entrada_casa.jpg",
-            "casa_direccion.jpg",
             "Entrada.jpg",
             "Sala_principal.jpg",
-            "Sala_01.jpg",
             "Sala_estar.jpg",
             "Sala_tv.jpg",
             "Sala_cocina.jpg",
             "Cocina.jpg",
             "Comedor.jpg",
-            "Sofa_cama.jpg",
-            "Tv_pasillo.jpg",
             "Habitacion_1_camas.jpg",
-            "habitacion_1_camas_01.jpg",
-            "habitacion_1_closet.jpg",
             "habitacion_1_completa.jpg",
             "habitacion_2.jpg",
             "habitacion_2_cama.jpg",
             "Baño_01.jpg",
             "baño_02.jpg",
-            "baño_03.jpg",
             "balcon.jpg",
             "balcon_mecedoras.jpg",
             "Patio_ropas.jpg"
         ],
-        "videos": [
-            "video_family_amazon_minimalist.mp4"
-        ],
+        "videos": [],
         "social_media": {
             "instagram": "https://www.instagram.com/amazon_minimalist/",
             "facebook": "https://www.facebook.com/amazonminimalist",
