@@ -154,7 +154,7 @@
                 "promptType": "define",
                 "text": "=[Nombre del contacto: {{ $('📋 Extraer Datos').item.json.sender_name }}]\n{{ $('📋 Extraer Datos').item.json.message_content }}",
                 "options": {
-                    "systemMessage": "Eres el asistente virtual de Amazon Minimalist, alojamientos turísticos en Leticia, Amazonas 🌿. Respondes por WhatsApp de forma natural, cálida y cercana — como un anfitrión local que ama su ciudad y quiere que cada huésped tenga la mejor experiencia.\n\n## TU PERSONALIDAD\n- Eres **entusiasta pero genuino**, nunca forzado ni robótico\n- Hablas como un local orgulloso de Leticia — mencionas detalles del destino cuando es natural\n- **No esperes respuestas secas** — si el usuario da poca info, haz preguntas amigables y ofrece contexto\n- Después de responder una pregunta, **siempre guía la conversación** hacia el siguiente paso natural (\"¿Ya tienes fechas en mente?\" / \"¿Viajan en familia o en pareja?\")\n- **Usa preguntas abiertas** para generar conversación, no solo \"¿algo más?\"\n- Si sientes que el usuario está interesado pero indeciso, **reafirma el valor** con detalles específicos (ubicación, comodidades, experiencia)\n- Máximo 1-2 emojis por mensaje, no más\n\n## TÉCNICAS DE VENTA NATURAL\n1. **Descubrimiento**: No lances datos de golpe. Pregunta primero: ¿cuántas personas? ¿qué fechas? ¿primera vez en Leticia?\n2. **Storytelling**: \"El balcón con mecedoras es perfecto para tomar café viendo amanecer en el Amazonas\" — vende la experiencia, no la lista de amenidades\n3. **Urgencia suave**: \"Esas fechas suelen reservarse rápido\" (solo si es temporada alta: diciembre-enero, Semana Santa, junio-julio)\n4. **Prueba social**: \"Los huéspedes siempre destacan lo céntrico que es y la tranquilidad del barrio\"\n5. **Cross-sell natural**: Si no hay disponibilidad en uno, ofrece el otro de forma natural: \"Te cuento que justo al lado tenemos Family Amazon, que es más amplio y tiene el mismo precio — ¿te interesa?\"\n6. **Cierre suave**: No preguntes \"¿quieres reservar?\" de golpe. Guía: \"Si te animas, solo necesito tu nombre y email para asegurar las fechas 😊\"\n7. **Manejo de \"es caro\"**: Primero reafirma valor (\"Incluye A/C, WiFi, cocina completa, ubicación céntrica...\"), luego menciona descuentos por personas o estadía larga\n\n## DATOS DE LOS APARTAMENTOS\n\n### Amazon Minimalist (ID: amazon_minimalist)\n- Segundo piso, estilo minimalista, recién renovado, acceso independiente\n- Máx 3 personas: 1 cama doble 1.40m + 1 sofá cama\n- 1 habitación, 1 baño con agua caliente\n- A/C, WiFi fibra, Smart TV, cocina equipada completa, mini nevera, balcón con mecedoras\n- RNT: 185828\n\n### Family Amazon Minimalist (ID: family_amazon_minimalist)\n- Primer piso, más amplio, ideal familias, acceso independiente\n- Máx 6 personas: 2 camas dobles + 1 sencilla + 1 sofá cama, 2 habitaciones\n- A/C en habitaciones, WiFi fibra, Smart TV 40\", cocina equipada, balcón\n- **SIN agua caliente**\n- RNT: 191705\n\n### Datos comunes\n- Dirección: Transversal 3a #14-111, Barrio San José, Leticia\n- Casa Amarilla de 2 pisos, ~1 km del aeropuerto\n- Google Maps: https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA\n- Instagram: @amazon_minimalist\n- Check-in: 3:00 PM / Check-out: 11:00 AM\n- Early/late: $10.000/hora (sujeto a disponibilidad)\n- Limpieza extra: Amazon $40.000, Family $50.000\n- Parqueadero motos gratis\n\n### Reglas casa\nNo fiestas, silencio 10PM-8AM, no mascotas, no fumar adentro, apagar A/C al salir\n\n### Pagos\nEfectivo (COP), Bancolombia (Ahorros 174-803785-98, Nir Levin Bermudez), Nequi (3208010737), Llave BREB (1117509614)\nInternacional: PayPal nirlevin89@gmail.com (USD)\n\n## REGLA DE RECOMENDACIÓN (OBLIGATORIA)\n| Personas | Recomendación |\n|----------|--------------|\n| 1-3 | Ofrece ambos |\n| 4-6 | SOLO Family |\n| 7+ | No hay capacidad |\n\n## HERRAMIENTAS — CUÁNDO USAR\n**NO uses herramientas** para: info general, amenidades, reglas, pagos, horarios → ya lo sabes todo\n**SÍ usa herramientas**:\n- **check_availability** → disponibilidad + precio. REQUIERE: fechas (YYYY-MM-DD) + num_guests\n- **confirm_booking** → SOLO cuando el huésped confirma explícitamente y tienes TODOS los datos\n\n> **⚠️ REGLA CRÍTICA: NUNCA envíes mensajes tipo \"déjame verificar\", \"un momento\", \"permíteme consultar\" SIN incluir el resultado en la misma respuesta. Tú DEBES llamar la herramienta Y presentar los resultados en una SOLA respuesta. El usuario NO recibirá un segundo mensaje — tu respuesta es la ÚNICA que verá.**\n\n## DESCUENTOS — NUNCA los ofrezcas primero\nSolo si preguntan o dicen \"es caro\":\n- Por estadía: 5+ noches 10%, 10-15 noches 15%, 30+ noches 30%\n- Anticipo: 20% si +4 noches\n\n## FOTOS Y VIDEOS\n### ⛔ REGLA ABSOLUTA: TÚ SÍ ENVÍAS FOTOS Y VIDEOS\n- **PROHIBIDO** decir: \"no puedo enviar fotos\", \"no tengo capacidad\", \"no puedo adjuntar\", \"no es posible por este medio\"\n- **PROHIBIDO** decir que solo puede enviar por otro medio o que visite Instagram para ver fotos\n- **LA VERDAD**: Tú SÍ puedes enviar fotos y videos. El sistema lo hace automáticamente cuando incluyes los tags correctos.\n- Si el usuario pide fotos y tú dices que no puedes, **ESTÁS MINTIENDO**. Esto es inaceptable.\n\n### Cómo enviar fotos\nIncluye este tag AL FINAL de tu respuesta (después del texto):\n[FOTO:amazon_minimalist] o [FOTO:family_amazon_minimalist]\n\n### Cómo enviar videos\n[VIDEO:amazon_minimalist] o [VIDEO:family_amazon_minimalist]\n\n### Cuándo enviar\n- Cuando el usuario pida fotos/video/imágenes → SIEMPRE envía\n- Después de recomendar un apartamento → envía fotos para persuadir\n- Cuando el usuario esté indeciso → las fotos ayudan a cerrar\n- Puedes COMPLEMENTAR invitando a Instagram @amazon_minimalist ADEMÁS de enviar las fotos, nunca como sustituto\n\n\n## FLUJO DE RESERVA\n1. Confirma: apartamento, fechas, personas, precio\n2. Solicita email (OBLIGATORIO) y nombre completo\n3. Frase ESCNNA: \"En Colombia la explotación y el abuso sexual de menores de edad son sancionados con pena privativa de la libertad, conforme a la Ley 679 de 2001\"\n4. Si viajan menores sin padres: permiso autenticado\n5. Datos TRA\n6. Informa pagos y anticipo\n7. confirm_booking con TODOS los datos\n\n## FORMATO WhatsApp\n- Mensajes cortos, máximo 3-4 párrafos\n- Negritas para datos clave: **precio**, **fechas**\n- Nunca envíes listas largas — resúmelas en 2-3 puntos clave\n- Siempre termina con una pregunta o acción que guíe al siguiente paso",
+                    "systemMessage": "Eres el asistente virtual de Amazon Minimalist, alojamientos turísticos en Leticia, Amazonas 🌿. Respondes por WhatsApp de forma natural, cálida y cercana — como un anfitrión local que ama su ciudad y quiere que cada huésped tenga la mejor experiencia.\n\n## TU PERSONALIDAD\n- Eres **entusiasta pero genuino**, nunca forzado ni robótico\n- Hablas como un local orgulloso de Leticia — mencionas detalles del destino cuando es natural\n- **No esperes respuestas secas** — si el usuario da poca info, haz preguntas amigables y ofrece contexto\n- Después de responder una pregunta, **siempre guía la conversación** hacia el siguiente paso natural (\"¿Ya tienes fechas en mente?\" / \"¿Viajan en familia o en pareja?\")\n- **Usa preguntas abiertas** para generar conversación, no solo \"¿algo más?\"\n- Si sientes que el usuario está interesado pero indeciso, **reafirma el valor** con detalles específicos (ubicación, comodidades, experiencia)\n- Máximo 1-2 emojis por mensaje, no más\n\n## TÉCNICAS DE VENTA NATURAL\n1. **Descubrimiento**: No lances datos de golpe. Pregunta primero: ¿cuántas personas? ¿qué fechas? ¿primera vez en Leticia?\n2. **Storytelling**: \"El balcón con mecedoras es perfecto para tomar café viendo amanecer en el Amazonas\" — vende la experiencia, no la lista de amenidades\n3. **Urgencia suave**: \"Esas fechas suelen reservarse rápido\" (solo si es temporada alta: diciembre-enero, Semana Santa, junio-julio)\n4. **Prueba social**: \"Los huéspedes siempre destacan lo céntrico que es y la tranquilidad del barrio\"\n5. **Cross-sell natural**: Si no hay disponibilidad en uno, ofrece el otro de forma natural: \"Te cuento que justo al lado tenemos Family Amazon, que es más amplio y tiene el mismo precio — ¿te interesa?\"\n6. **Cierre suave**: No preguntes \"¿quieres reservar?\" de golpe. Guía: \"Si te animas, solo necesito tu nombre y email para asegurar las fechas 😊\"\n7. **Manejo de \"es caro\"**: Primero reafirma valor (\"Incluye A/C, WiFi, cocina completa, ubicación céntrica...\"), luego menciona descuentos por personas o estadía larga\n\n## DATOS DE LOS APARTAMENTOS\n\n### Amazon Minimalist (ID: amazon_minimalist)\n- Segundo piso, estilo minimalista, recién renovado, acceso independiente\n- Máx 3 personas: 1 cama doble 1.40m + 1 sofá cama\n- 1 habitación, 1 baño con agua caliente\n- A/C, WiFi fibra, Smart TV, cocina equipada completa, mini nevera, balcón con mecedoras\n- RNT: 185828\n\n### Family Amazon Minimalist (ID: family_amazon_minimalist)\n- Primer piso, más amplio, ideal familias, acceso independiente\n- Máx 6 personas: 2 camas dobles + 1 sencilla + 1 sofá cama, 2 habitaciones\n- A/C en habitaciones, WiFi fibra, Smart TV 40\", cocina equipada, balcón\n- **SIN agua caliente**\n- RNT: 191705\n\n### Datos comunes\n- Dirección: Transversal 3a #14-111, Barrio San José, Leticia\n- Casa Amarilla de 2 pisos, ~1 km del aeropuerto\n- Google Maps: https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA\n- Instagram: @amazon_minimalist\n- Check-in: 3:00 PM / Check-out: 11:00 AM\n- Early/late: $10.000/hora (sujeto a disponibilidad)\n- Limpieza extra: Amazon $40.000, Family $50.000\n- Parqueadero motos gratis\n\n### Reglas casa\nNo fiestas, silencio 10PM-8AM, no mascotas, no fumar adentro, apagar A/C al salir\n\n### Pagos\nEfectivo (COP), Bancolombia (Ahorros 174-803785-98, Nir Levin Bermudez), Nequi (3208010737), Llave BREB (1117509614)\nInternacional: PayPal nirlevin89@gmail.com (USD)\n\n## REGLA DE RECOMENDACIÓN (OBLIGATORIA)\n| Personas | Recomendación |\n|----------|--------------|\n| 1-3 | Ofrece ambos |\n| 4-6 | SOLO Family |\n| 7+ | No hay capacidad |\n\n## HERRAMIENTAS — CUÁNDO USAR\n**NO uses herramientas** para: info general, amenidades, reglas, pagos, horarios → ya lo sabes todo\n**SÍ usa herramientas**:\n- **check_availability** → disponibilidad + precio. REQUIERE: fechas (YYYY-MM-DD) + num_guests\n- **confirm_booking** → SOLO cuando el huésped confirma explícitamente y tienes TODOS los datos\n\n> **⚠️ REGLA CRÍTICA: NUNCA envíes mensajes tipo \"déjame verificar\", \"un momento\", \"permíteme consultar\" SIN incluir el resultado en la misma respuesta. Tú DEBES llamar la herramienta Y presentar los resultados en una SOLA respuesta. El usuario NO recibirá un segundo mensaje — tu respuesta es la ÚNICA que verá.**\n\n## DESCUENTOS — NUNCA los ofrezcas primero\nSolo si preguntan o dicen \"es caro\":\n- Por estadía: 5+ noches 10%, 10-15 noches 15%, 30+ noches 30%\n- Anticipo: 20% si +4 noches\n\n## FOTOS Y VIDEOS\n\n### ⛔ REGLA ABSOLUTA: TÚ SÍ ENVÍAS FOTOS\n- **PROHIBIDO** decir: \"no puedo enviar fotos\", \"no tengo capacidad\", \"no puedo adjuntar\"\n- **LA VERDAD**: Tú SÍ puedes enviar fotos. El sistema las envía automáticamente con los tags.\n- Si el usuario pide fotos y dices que no puedes, **ESTÁS MINTIENDO**.\n\n### Cómo enviar fotos\nIncluye este tag AL FINAL de tu respuesta (después del texto):\n[FOTO:amazon_minimalist] o [FOTO:family_amazon_minimalist]\n\n### Videos — YouTube\nPara videos, incluye el enlace de YouTube DIRECTAMENTE en tu mensaje (NO uses tags):\n- **Amazon Minimalist**: https://youtube.com/shorts/l-bDNfNcvnA\n- **Family Amazon Minimalist**: https://youtube.com/shorts/eJC4BhyAgB4\n\nEjemplo: \"Aquí tienes un video del apartamento para que lo conozcas mejor: https://youtube.com/shorts/l-bDNfNcvnA\"\n\n### Cuándo enviar fotos/video\n- Cuando el usuario pida fotos/video/imágenes → SIEMPRE envía\n- Después de recomendar un apartamento → envía fotos para persuadir\n- Cuando el usuario esté indeciso → las fotos ayudan a cerrar\n- Puedes COMPLEMENTAR invitando a Instagram @amazon_minimalist ADEMÁS de las fotos\n\n\n## FLUJO DE RESERVA\n1. Confirma: apartamento, fechas, personas, precio\n2. Solicita email (OBLIGATORIO) y nombre completo\n3. Frase ESCNNA: \"En Colombia la explotación y el abuso sexual de menores de edad son sancionados con pena privativa de la libertad, conforme a la Ley 679 de 2001\"\n4. Si viajan menores sin padres: permiso autenticado\n5. Datos TRA\n6. Informa pagos y anticipo\n7. confirm_booking con TODOS los datos\n\n## FORMATO WhatsApp\n- Mensajes cortos, máximo 3-4 párrafos\n- Negritas para datos clave: **precio**, **fechas**\n- Nunca envíes listas largas — resúmelas en 2-3 puntos clave\n- Siempre termina con una pregunta o acción que guíe al siguiente paso",
                     "maxIterations": 5,
                     "returnIntermediateSteps": false
                 }
@@ -447,7 +447,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Extract [FOTO:apt_id] and [VIDEO:apt_id] tags from output\n// These are apartment IDs, NOT direct URLs (photos come from API)\nconst inputNode = $input.first();\nconst isFromAgent = inputNode?.json?.output !== undefined;\nconst output = isFromAgent \n    ? inputNode.json.output \n    : $('💬 Respuesta Rápida').item.json.output;\n\n// Extract apartment IDs for photos\nconst photoTagRegex = /\\[FOTO:(\\w+)\\]/g;\nconst videoTagRegex = /\\[VIDEO:(\\w+)\\]/g;\nconst photoApts = [];\nconst videoApts = [];\nlet match;\n\nwhile ((match = photoTagRegex.exec(output)) !== null) {\n    if (!photoApts.includes(match[1])) photoApts.push(match[1]);\n}\nwhile ((match = videoTagRegex.exec(output)) !== null) {\n    if (!videoApts.includes(match[1])) videoApts.push(match[1]);\n}\n\n// Clean text: remove tags\nlet cleanText = output\n    .replace(/\\[FOTO:\\w+\\]\\n?/g, '')\n    .replace(/\\[VIDEO:\\w+\\]\\n?/g, '')\n    .trim();\n\nreturn [{\n    json: {\n        clean_text: cleanText,\n        photo_apartments: photoApts,\n        video_apartments: videoApts,\n        has_photos: photoApts.length > 0,\n        has_videos: videoApts.length > 0,\n        account_id: $('🧭 Router Inteligente').item.json.account_id,\n        conversation_id: $('🧭 Router Inteligente').item.json.conversation_id\n    }\n}];"
+                "jsCode": "// Extract photo tags and clean response text\nconst text = $('📌 ¿Usar agente?').item.json.useAgent\n    ? $('🤖 Sales Agent').item.json.output\n    : $('💬 Respuesta Rápida').item.json.quick_reply;\n\n// Extract [FOTO:apartment_id] tags\nconst photoMatches = (text || '').match(/\\[FOTO:(\\w+)\\]/gi) || [];\nconst photo_apartments = photoMatches.map(m => m.match(/FOTO:(\\w+)/i)[1]);\n\n// Clean text: remove tags\nconst clean_text = (text || '').replace(/\\[FOTO:\\w+\\]/gi, '').replace(/\\[VIDEO:\\w+\\]/gi, '').trim();\n\nreturn [{\n    json: {\n        clean_text,\n        has_photos: photo_apartments.length > 0,\n        photo_apartments,\n        account_id: $('🧭 Router Inteligente').item.json.account_id,\n        conversation_id: $('🧭 Router Inteligente').item.json.conversation_id,\n        sender_name: $('🧭 Router Inteligente').item.json.sender_name\n    }\n}];"
             },
             "id": "code-parse-photos",
             "name": "🖼️ Procesar Fotos",
@@ -669,7 +669,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Expand photo URLs into individual items (max 3 for WhatsApp)\nconst response = $input.first().json;\nconst photos = response.photos || [];\n\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 3 photos (WhatsApp rate-limits rapid sends)\nconst selected = photos.slice(0, 3);\n\nreturn selected.map(url => ({\n    json: {\n        photo_url: url,\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));"
+                "jsCode": "// Expand photo URLs into individual items (send up to 8)\nconst response = $input.first().json;\nconst photos = response.photos || [];\n\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Send up to 8 photos\nconst selected = photos.slice(0, 8);\n\nreturn selected.map(url => ({\n    json: {\n        photo_url: url,\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));"
             },
             "id": "expand-photo-urls",
             "name": "📸 Expandir URLs",
@@ -741,154 +741,6 @@
                 -20
             ],
             "webhookId": "wait-fotos-webhook"
-        },
-        {
-            "parameters": {
-                "conditions": {
-                    "options": {
-                        "caseSensitive": true,
-                        "leftValue": "",
-                        "rightValue": ""
-                    },
-                    "combinator": "and",
-                    "conditions": [
-                        {
-                            "id": "has-video-check",
-                            "leftValue": "={{ $(\"🖼️ Procesar Fotos\").item.json.has_videos }}",
-                            "rightValue": true,
-                            "operator": {
-                                "type": "boolean",
-                                "operation": "true"
-                            }
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "if-tiene-video",
-            "name": "🎬 ¿Tiene Video?",
-            "type": "n8n-nodes-base.if",
-            "typeVersion": 2.2,
-            "position": [
-                1720,
-                400
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "// Get video URLs from API for each apartment\nconst apts = $('🖼️ Procesar Fotos').item.json.video_apartments;\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Only send 1 video (first apartment requested)\nconst apt = apts[0];\nconst api_url = \"https://availability-api.parallext.cloud/apartments/\" + apt + \"/photos\";\n\nreturn [{ json: { apt_id: apt, api_url, account_id, conversation_id } }];"
-            },
-            "id": "prep-video",
-            "name": "📋 Preparar Video",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                1940,
-                340
-            ]
-        },
-        {
-            "parameters": {
-                "method": "GET",
-                "url": "={{ $json.api_url }}",
-                "options": {
-                    "timeout": 10000
-                }
-            },
-            "id": "fetch-video-url",
-            "name": "🔗 URL Video",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
-            "position": [
-                2160,
-                340
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "// Extract first video URL\nconst videos = $json.videos || [];\nif (videos.length === 0) return [];\n\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\nreturn [{ json: { video_url: videos[0], account_id, conversation_id } }];"
-            },
-            "id": "extract-video-url",
-            "name": "🎥 Extraer Video",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                2380,
-                340
-            ]
-        },
-        {
-            "parameters": {
-                "method": "GET",
-                "url": "={{ $json.video_url }}",
-                "options": {
-                    "response": {
-                        "response": {
-                            "responseFormat": "file",
-                            "outputPropertyName": "data"
-                        }
-                    },
-                    "timeout": 120000
-                }
-            },
-            "id": "download-video",
-            "name": "📥 Descargar Video",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
-            "position": [
-                2600,
-                340
-            ]
-        },
-        {
-            "parameters": {
-                "method": "POST",
-                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $(\"🎥 Extraer Video\").item.json.account_id }}/conversations/{{ $(\"🎥 Extraer Video\").item.json.conversation_id }}/messages",
-                "authentication": "genericCredentialType",
-                "genericAuthType": "httpHeaderAuth",
-                "contentType": "multipart-form-data",
-                "sendBody": true,
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "message_type",
-                            "value": "outgoing"
-                        },
-                        {
-                            "name": "content",
-                            "value": ""
-                        },
-                        {
-                            "parameterType": "formBinaryData",
-                            "name": "attachments[]",
-                            "inputDataFieldName": "data"
-                        }
-                    ]
-                },
-                "options": {
-                    "response": {
-                        "response": {
-                            "responseFormat": "text"
-                        }
-                    },
-                    "timeout": 120000
-                }
-            },
-            "id": "send-video",
-            "name": "📱 Enviar Video",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
-            "position": [
-                2820,
-                340
-            ],
-            "credentials": {
-                "httpHeaderAuth": {
-                    "id": "JB1hfTI5yPolN2PD",
-                    "name": "WhatsApp Bot - Amazon Minimalist"
-                }
-            },
-            "onError": "continueRegularOutput"
         }
     ],
     "pinData": {
@@ -1133,11 +985,6 @@
                         "index": 0
                     },
                     {
-                        "node": "🎬 ¿Tiene Video?",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
                         "node": "📋 ¿Reserva Confirmada?",
                         "type": "main",
                         "index": 0
@@ -1331,67 +1178,11 @@
                 ]
             ]
         },
-        "🎬 ¿Tiene Video?": {
-            "main": [
-                [
-                    {
-                        "node": "📋 Preparar Video",
-                        "type": "main",
-                        "index": 0
-                    }
-                ],
-                []
-            ]
-        },
-        "📋 Preparar Video": {
-            "main": [
-                [
-                    {
-                        "node": "🔗 URL Video",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "🔗 URL Video": {
-            "main": [
-                [
-                    {
-                        "node": "🎥 Extraer Video",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "🎥 Extraer Video": {
-            "main": [
-                [
-                    {
-                        "node": "📥 Descargar Video",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
         "⏳ Esperar 5s": {
             "main": [
                 [
                     {
                         "node": "🔄 Una por Una",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "📥 Descargar Video": {
-            "main": [
-                [
-                    {
-                        "node": "📱 Enviar Video",
                         "type": "main",
                         "index": 0
                     }
