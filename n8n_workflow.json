@@ -521,7 +521,7 @@
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.2,
             "position": [
-                2380,
+                2600,
                 -20
             ],
             "notes": "Descarga la imagen desde la URL para luego subirla como adjunto a Chatwoot."
@@ -565,8 +565,8 @@
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.2,
             "position": [
-                2600,
-                -20
+                2820,
+                80
             ],
             "credentials": {
                 "httpHeaderAuth": {
@@ -667,7 +667,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Expand photo URLs into individual items for download loop\nconst response = $input.first().json;\nconst photos = response.photos || [];\n\n// Pass through account/conversation from earlier in the chain\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 5 photos max\nconst selected = photos.slice(0, 5);\n\nreturn selected.map(url => ({\n    json: {\n        photo_url: url,\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));"
+                "jsCode": "// Expand photo URLs into individual items (max 3 for WhatsApp)\nconst response = $input.first().json;\nconst photos = response.photos || [];\n\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 3 photos (WhatsApp rate-limits rapid sends)\nconst selected = photos.slice(0, 3);\n\nreturn selected.map(url => ({\n    json: {\n        photo_url: url,\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));"
             },
             "id": "expand-photo-urls",
             "name": "📸 Expandir URLs",
@@ -710,6 +710,35 @@
                 }
             },
             "onError": "continueRegularOutput"
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "split-fotos-batch",
+            "name": "🔄 Una por Una",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                2380,
+                -20
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 3,
+                "unit": "seconds"
+            },
+            "id": "wait-entre-fotos",
+            "name": "⏳ Esperar 3s",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1.1,
+            "position": [
+                2820,
+                -20
+            ],
+            "webhookId": "wait-fotos-webhook"
         }
     ],
     "pinData": {
@@ -1117,7 +1146,41 @@
             "main": [
                 [
                     {
+                        "node": "🔄 Una por Una",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔄 Una por Una": {
+            "main": [
+                [],
+                [
+                    {
                         "node": "📥 Descargar Foto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📱 Enviar Foto": {
+            "main": [
+                [
+                    {
+                        "node": "⏳ Esperar 3s",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⏳ Esperar 3s": {
+            "main": [
+                [
+                    {
+                        "node": "🔄 Una por Una",
                         "type": "main",
                         "index": 0
                     }
