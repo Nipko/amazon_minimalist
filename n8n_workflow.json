@@ -511,9 +511,11 @@
                 "options": {
                     "response": {
                         "response": {
-                            "responseFormat": "file"
+                            "responseFormat": "file",
+                            "outputPropertyName": "data"
                         }
-                    }
+                    },
+                    "timeout": 15000
                 }
             },
             "id": "download-photo",
@@ -542,7 +544,7 @@
                         },
                         {
                             "name": "content",
-                            "value": "📸"
+                            "value": ""
                         },
                         {
                             "parameterType": "formBinaryData",
@@ -727,11 +729,11 @@
         },
         {
             "parameters": {
-                "amount": 3,
+                "amount": 5,
                 "unit": "seconds"
             },
             "id": "wait-entre-fotos",
-            "name": "⏳ Esperar 3s",
+            "name": "⏳ Esperar 5s",
             "type": "n8n-nodes-base.wait",
             "typeVersion": 1.1,
             "position": [
@@ -822,10 +824,11 @@
                 "options": {
                     "response": {
                         "response": {
-                            "responseFormat": "file"
+                            "responseFormat": "file",
+                            "outputPropertyName": "data"
                         }
                     },
-                    "timeout": 60000
+                    "timeout": 120000
                 }
             },
             "id": "download-video",
@@ -853,7 +856,7 @@
                         },
                         {
                             "name": "content",
-                            "value": "🎬"
+                            "value": ""
                         },
                         {
                             "parameterType": "formBinaryData",
@@ -868,7 +871,7 @@
                             "responseFormat": "text"
                         }
                     },
-                    "timeout": 60000
+                    "timeout": 120000
                 }
             },
             "id": "send-video",
@@ -1321,18 +1324,7 @@
             "main": [
                 [
                     {
-                        "node": "⏳ Esperar 3s",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "⏳ Esperar 3s": {
-            "main": [
-                [
-                    {
-                        "node": "🔄 Una por Una",
+                        "node": "⏳ Esperar 5s",
                         "type": "main",
                         "index": 0
                     }
@@ -1389,6 +1381,17 @@
                 [
                     {
                         "node": "📱 Enviar Video",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⏳ Esperar 5s": {
+            "main": [
+                [
+                    {
+                        "node": "🔄 Una por Una",
                         "type": "main",
                         "index": 0
                     }
