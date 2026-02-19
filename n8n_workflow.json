@@ -526,7 +526,8 @@
                 2600,
                 -20
             ],
-            "notes": "Descarga la imagen desde la URL para luego subirla como adjunto a Chatwoot."
+            "notes": "Descarga la imagen desde la URL para luego subirla como adjunto a Chatwoot.",
+            "onError": "continueRegularOutput"
         },
         {
             "parameters": {
