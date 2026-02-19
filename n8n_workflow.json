@@ -493,7 +493,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Build photo fetch items from apartment IDs\nconst apts = $('🖼️ Procesar Fotos').item.json.photo_apartments;\nconst items = apts.map(apt => ({\n    json: {\n        apt_id: apt,\n        api_url: \\`https://availability-api.parallext.cloud/apartments/\\${apt}/photos\\`,\n        account_id: $('🖼️ Procesar Fotos').item.json.account_id,\n        conversation_id: $('🖼️ Procesar Fotos').item.json.conversation_id\n    }\n}));\nreturn items;"
+                "jsCode": "// Build photo fetch items from apartment IDs\nconst apts = $('🖼️ Procesar Fotos').item.json.photo_apartments;\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\nconst items = apts.map(apt => ({\n    json: {\n        apt_id: apt,\n        api_url: \"https://availability-api.parallext.cloud/apartments/\" + apt + \"/photos\",\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));\nreturn items;"
             },
             "id": "prepare-photo-items",
             "name": "📋 Preparar Fotos",
