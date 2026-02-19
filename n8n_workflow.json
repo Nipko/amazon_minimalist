@@ -238,12 +238,15 @@
             "parameters": {
                 "conditions": {
                     "options": {
-                        "caseSensitive": false
+                        "caseSensitive": false,
+                        "leftValue": "",
+                        "rightValue": ""
                     },
                     "combinator": "or",
                     "conditions": [
                         {
-                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "id": "booking-check-1",
+                            "leftValue": "={{ $(\"🖼️ Procesar Fotos\").item.json.clean_text }}",
                             "rightValue": "confirmada",
                             "operator": {
                                 "type": "string",
@@ -251,7 +254,8 @@
                             }
                         },
                         {
-                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "id": "booking-check-2",
+                            "leftValue": "={{ $(\"🖼️ Procesar Fotos\").item.json.clean_text }}",
                             "rightValue": "reserva exitosa",
                             "operator": {
                                 "type": "string",
@@ -259,7 +263,8 @@
                             }
                         },
                         {
-                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "id": "booking-check-3",
+                            "leftValue": "={{ $(\"🖼️ Procesar Fotos\").item.json.clean_text }}",
                             "rightValue": "bloqueadas",
                             "operator": {
                                 "type": "string",
@@ -458,12 +463,15 @@
             "parameters": {
                 "conditions": {
                     "options": {
-                        "caseSensitive": true
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "rightValue": ""
                     },
                     "combinator": "and",
                     "conditions": [
                         {
-                            "leftValue": "={{ $('🖼️ Procesar Fotos').item.json.has_photos }}",
+                            "id": "has-photos-check",
+                            "leftValue": "={{ $(\"🖼️ Procesar Fotos\").item.json.has_photos }}",
                             "rightValue": true,
                             "operator": {
                                 "type": "boolean",
