@@ -1,0 +1,1146 @@
+{
+    "name": "🏠 Amazon Minimalist — Chatwoot Sales Agent",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8",
+                "options": {}
+            },
+            "id": "3d474654-ed75-4e14-99b4-35273f37bb71",
+            "name": "Chatwoot Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -240,
+                80
+            ],
+            "webhookId": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8",
+            "notes": "Recibe mensajes desde Chatwoot bot. URL: https://n8n.parallext.cloud/webhook/1eff1133-3ba0-45cc-9ece-5f88d13c74d8"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.body.event }}",
+                            "rightValue": "message_created",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            },
+                            "id": "6cdb8da1-c7fb-4182-9173-8796e3b84ba3"
+                        },
+                        {
+                            "id": "9f7f989a-494d-470c-92e4-01de7971145c",
+                            "leftValue": "={{ $json.body.message_type }}",
+                            "rightValue": "incoming",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "5483b052-a609-43dc-959c-867ce58b8c84",
+            "name": "🔒 Solo Mensajes Entrantes",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -20,
+                80
+            ],
+            "notes": "Filtra solo message_created + incoming. Ignora mensajes del bot, cambios de estado, etc."
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $('Chatwoot Webhook').item.json.body.account.id }}/conversations/{{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].conversation_id }}/toggle_typing_status",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\"typing_status\": \"on\"}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "text"
+                        }
+                    },
+                    "timeout": 5000
+                }
+            },
+            "id": "b76db99f-b87e-4b47-a68b-ed175919de32",
+            "name": "⌨️ Escribiendo...",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                160,
+                80
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "eoZOmylBu2V63KM8",
+                    "name": "Chatwoot User Token"
+                }
+            },
+            "notes": "Activa el indicador 'escribiendo...' en Chatwoot mientras el agente procesa la respuesta."
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "message-content",
+                            "name": "message_content",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].processed_message_content }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "conversation-id",
+                            "name": "conversation_id",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].conversation_id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "account-id",
+                            "name": "account_id",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].account_id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "sender-name",
+                            "name": "sender_name",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].sender.name || 'Huésped'}}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "sender-phone",
+                            "name": "sender_phone",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.meta.sender.phone_number || '' }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "sender-email",
+                            "name": "sender_email",
+                            "value": "={{ $('Chatwoot Webhook').item.json.body.conversation.messages[0].sender.email  || ''  }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "14bddb51-76ec-4aec-b7cd-237ceedf0524",
+            "name": "📋 Extraer Datos",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                380,
+                80
+            ],
+            "notes": "Extrae el contenido del mensaje y datos del contacto del payload de Chatwoot."
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=[Nombre del contacto: {{ $('📋 Extraer Datos').item.json.sender_name }}]\n{{ $('📋 Extraer Datos').item.json.message_content }}",
+                "options": {
+                    "systemMessage": "Eres el asistente virtual de Amazon Minimalist, alojamientos turísticos en Leticia, Amazonas (Colombia). Respondes por WhatsApp.\n\n## REGLAS ABSOLUTAS\n1. **SOLO responde con información de tu base de conocimiento.** Si no sabes algo, di: \"Esa información no la tengo disponible, pero puedo consultarlo con el equipo. ¿Te puedo ayudar con algo más?\"\n2. **NUNCA inventes datos, precios, servicios, tours, o información que no esté en tu base.**\n3. **Sé conciso.** Responde SOLO lo que preguntan.\n4. **Saludo inteligente.** Al inicio del mensaje recibirás el nombre del contacto entre corchetes [Nombre del contacto: X]. Si el nombre NO está vacío, saluda usándolo. Si está vacío o es un teléfono, pregúntalo.\n5. **Usa lenguaje natural, cálido y profesional.** Como un anfitrión que genuinamente quiere ayudar.\n6. **Usa emojis con moderación** (máximo 1-2 por mensaje).\n\n## DATOS DE LOS APARTAMENTOS (FIJOS — no necesitas consultar API para esto)\n\n### Amazon Minimalist (ID: amazon_minimalist)\n- Segundo piso, estilo minimalista, recién renovado, acceso independiente\n- Capacidad: máx 3 personas (1 cama doble 1.40m + 1 sofá cama en sala)\n- 1 habitación, 1 baño\n- Amenidades: A/C, WiFi fibra óptica, Smart TV, cocina equipada completa (ollas, vasos, sartén, estufa, cubiertos, cafetera, licuadora), mini nevera, agua caliente, balcón con mecedoras, ventilador\n- RNT: 185828\n\n### Family Amazon Minimalist (ID: family_amazon_minimalist)\n- Primer piso, más amplio, ideal familias, acceso independiente\n- Capacidad: máx 6 personas (2 camas dobles 1.40m + 1 cama sencilla + 1 sofá cama)\n- 2 habitaciones, 1 baño\n- Amenidades: A/C en habitaciones, WiFi fibra óptica, Smart TV 40\", cocina equipada, mini nevera, balcón con mecedoras, ventilador\n- **SIN agua caliente**\n- RNT: 191705\n\n### Datos comunes\n- Dirección: Transversal 3a #14-111, Barrio San José/Simón Bolívar, Leticia\n- Casa Amarilla de 2 pisos, ~1 km del Aeropuerto Alfredo Vásquez Cobo\n- Google Maps: https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA\n- Instagram: @amazon_minimalist\n- Reglas: No fiestas, silencio 10PM-8AM, no mascotas, no fumar adentro, apagar A/C al salir\n- Check-in: 3:00 PM, Check-out: 11:00 AM\n- Early check-in / late check-out: $10.000 COP/hora (sujeto a disponibilidad)\n- Guardar equipaje: gratis, solicitar con anticipación\n- Limpieza extra: Amazon $40.000, Family $50.000\n- Cambio de sábanas cada 6 días si el huésped lo desea\n- Parqueadero motos: gratis\n\n### Medios de pago\n- Efectivo (COP), Bancolombia (Ahorros 174-803785-98, Nir Levin Bermudez), Nequi (3208010737), Llave BREB (1117509614)\n- Internacional: PayPal nirlevin89@gmail.com (USD, libre de comisiones)\n\n## REGLA DE RECOMENDACIÓN POR PERSONAS (MUY IMPORTANTE)\n| # Personas | Recomendación |\n|------------|--------------|\n| 1-3 | Ofrece ambos apartamentos |\n| 4-6 | SOLO Family Amazon Minimalist |\n| 7+ | No tenemos capacidad |\nNUNCA ofrezcas Amazon Minimalist para 4+ personas.\n\n## CONTROL DE DATOS — OBLIGATORIO\nNUNCA llames herramientas sin TODOS los datos:\n- **check_availability**: fechas check-in/out (YYYY-MM-DD) + num_guests\n- **confirm_booking**: apartamento + fechas + personas + nombre + teléfono + email + precios + confirmación EXPLÍCITA\n\n## METODOLOGÍA DE VENTAS\n1. Saludo cálido\n2. Descubre: ¿Cuántas personas? ¿Qué fechas?\n3. Recomienda según tabla de personas (sin herramientas)\n4. Cuando tenga datos → usa **check_availability** (devuelve disponibilidad + precio)\n5. Presenta precio + 2-3 beneficios clave\n6. Manejo de objeciones → reafirma valor\n7. Cierre → \"¿Te gustaría reservar?\"\n\n### Descuentos — NUNCA ofrezcas primero\n- Si el usuario dice \"es caro\": reafirma valor → descuento por personas → descuento por estadía larga\n- Descuento por estadía: 5+ noches 10%, 10-15 noches 15%, 30+ noches 30%\n- Anticipo 20% si +4 noches\n\n## CUÁNDO USAR HERRAMIENTAS\n**NO uses herramientas** para: saludos, preguntas generales, reglas, horarios, amenidades, pagos → ya tienes toda la info arriba.\n**SÍ usa herramientas**:\n1. **check_availability** → verificar disponibilidad + obtener precio (SIEMPRE primero)\n2. **confirm_booking** → SOLO con TODOS los datos + confirmación explícita\n\n## FOTOS Y VIDEOS\nCuando el usuario pida fotos, incluye el tag al final de tu mensaje:\n[FOTO:amazon_minimalist] o [FOTO:family_amazon_minimalist]\nPara videos: [VIDEO:amazon_minimalist] o [VIDEO:family_amazon_minimalist]\nSOLO incluye estos tags cuando el usuario los pida explícitamente o para persuadir.\n\n## FLUJO DE RESERVA\n1. Confirma datos: apartamento, fechas, personas, precio\n2. Solicita email (OBLIGATORIO)\n3. Solicita nombre completo si falta\n4. Frase ESCNNA: \"En Colombia la explotación y el abuso sexual de menores de edad son sancionados con pena privativa de la libertad, conforme a la Ley 679 de 2001\"\n5. Si viajan menores sin padres: solicita permiso autenticado\n6. Datos TRA (colombianos: nombre, doc, nacionalidad, residencia, motivo; extranjeros: +fecha nacimiento, género, procedencia, destino)\n7. Informa medios de pago y anticipo\n8. confirm_booking con TODOS los datos\n\n## POLÍTICA CROSS-APARTMENT\nSi un apartamento no está disponible pero el otro sí: ofrécelo mencionando que son contiguos y mismo precio. Solo si la capacidad lo permite.\n\n## FORMATO\n- Mensajes cortos estilo WhatsApp\n- Negritas para datos clave (**precio**, **fechas**)\n- Máx 3-4 párrafos cortos",
+                    "maxIterations": 3,
+                    "returnIntermediateSteps": false
+                }
+            },
+            "id": "b1b8d2ab-acb3-42df-8c47-add9e66fe843",
+            "name": "🤖 Sales Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 1.7,
+            "position": [
+                1050,
+                -20
+            ],
+            "notes": "Agente de ventas con Gemini 2.0 Flash. System prompt con metodología de ventas SPIN+AIDA. Usa herramientas HTTP para consultar datos reales. El nombre del contacto se inyecta automáticamente desde Chatwoot."
+        },
+        {
+            "parameters": {
+                "options": {
+                    "temperature": 0.4
+                }
+            },
+            "id": "453fdcb5-1dc1-4026-a8ef-1a78307f7432",
+            "name": "Gemini 2.0 Flash",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                720,
+                448
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "CSwVDNIC6a4tmrl1",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            },
+            "notes": "Temperatura baja (0.4) para respuestas precisas y consistentes. No inventar datos."
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $('📋 Extraer Datos').item.json.conversation_id }}",
+                "contextWindowLength": 10
+            },
+            "id": "759a409c-160f-4ce1-acb0-0645c24fbd08",
+            "name": "📝 Chat Memory",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                960,
+                448
+            ],
+            "notes": "Memoria de 20 mensajes por conversación. La session key es el conversation_id de Chatwoot para mantener el contexto por cada chat."
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $('🖼️ Procesar Fotos').item.json.account_id }}/conversations/{{ $('🖼️ Procesar Fotos').item.json.conversation_id }}/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ content: $('🖼️ Procesar Fotos').item.json.clean_text, message_type: 'outgoing', content_type: 'text' }) }}",
+                "options": {}
+            },
+            "id": "c80b6581-5202-46e3-83ab-1df8684b5fb5",
+            "name": "📱 Enviar Respuesta",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1500,
+                80
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "JB1hfTI5yPolN2PD",
+                    "name": "WhatsApp Bot - Amazon Minimalist"
+                }
+            },
+            "notes": "Envía la respuesta del agente de vuelta a Chatwoot, que la reenvía al usuario por WhatsApp."
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": false
+                    },
+                    "combinator": "or",
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "rightValue": "confirmada",
+                            "operator": {
+                                "type": "string",
+                                "operation": "contains"
+                            }
+                        },
+                        {
+                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "rightValue": "reserva exitosa",
+                            "operator": {
+                                "type": "string",
+                                "operation": "contains"
+                            }
+                        },
+                        {
+                            "leftValue": "={{ $('🤖 Sales Agent').item.json.output }}",
+                            "rightValue": "bloqueadas",
+                            "operator": {
+                                "type": "string",
+                                "operation": "contains"
+                            }
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "45d06d05-ae8f-4eef-884c-84b33730c299",
+            "name": "📋 ¿Reserva Confirmada?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                1720,
+                180
+            ]
+        },
+        {
+            "parameters": {
+                "sendTo": "nirlevin89@gmail.com, sofia.henao96@gmail.com",
+                "subject": "=🏠 Confirmación de Reserva — Amazon Minimalist | {{ $('📋 Extraer Datos').item.json.sender_name }}",
+                "message": "=<div style=\"font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n<div style=\"background: linear-gradient(135deg, #1a472a 0%, #2d8f4e 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;\">\n<h1 style=\"color: white; margin: 0; font-size: 22px;\">🏠 Reserva Confirmada</h1>\n<p style=\"color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;\">Amazon Minimalist — Leticia, Amazonas</p>\n</div>\n<div style=\"background: #ffffff; padding: 28px 24px; border: 1px solid #e5e7eb;\">\n<h2 style=\"color: #1a472a; font-size: 16px; margin: 0 0 16px; border-bottom: 2px solid #2d8f4e; padding-bottom: 8px;\">📋 Datos de la Reserva</h2>\n<table style=\"width: 100%; font-size: 14px; line-height: 1.8; border-collapse: collapse;\">\n<tr><td style=\"color: #6b7280; width: 40%; padding: 4px 0;\">Huésped:</td><td style=\"font-weight: 600; padding: 4px 0;\">{{ $('📋 Extraer Datos').item.json.sender_name }}</td></tr>\n<tr><td style=\"color: #6b7280; padding: 4px 0;\">Teléfono:</td><td style=\"padding: 4px 0;\">{{ $('📋 Extraer Datos').item.json.sender_phone }}</td></tr>\n<tr><td style=\"color: #6b7280; padding: 4px 0;\">Email:</td><td style=\"padding: 4px 0;\">{{ $('📋 Extraer Datos').item.json.sender_email }}</td></tr>\n</table>\n<div style=\"background: #f0fdf4; padding: 16px; border-radius: 8px; margin-top: 16px;\">\n<p style=\"margin: 0; font-size: 14px; color: #374151;\"><strong>Detalles de la reserva:</strong></p>\n<p style=\"margin: 8px 0 0; font-size: 13px; color: #4b5563; white-space: pre-wrap;\">{{ $('🤖 Sales Agent').item.json.output }}</p>\n</div>\n</div>\n<div style=\"background: #f0fdf4; padding: 16px 24px; border: 1px solid #22c55e; border-radius: 0 0 16px 16px;\">\n<p style=\"margin: 0; font-size: 13px; color: #166534;\"><strong>📍 Dirección:</strong> Transversal 3a #14-111, Barrio San José. Casa Amarilla de 2 pisos.</p>\n<p style=\"margin: 4px 0 0; font-size: 13px; color: #166534;\"><strong>🕐 Check-in:</strong> 3:00 PM | <strong>Check-out:</strong> 11:00 AM</p>\n<p style=\"margin: 4px 0 0; font-size: 12px; color: #166534;\">Google Maps: https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA</p>\n</div>\n</div>",
+                "options": {}
+            },
+            "id": "59090132-afc5-428b-a25b-9b35b6747689",
+            "name": "📧 Email Confirmación",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                1940,
+                120
+            ],
+            "webhookId": "a4ff22ae-4714-4cea-b6c5-c7d48d4181cc",
+            "credentials": {
+                "gmailOAuth2": {
+                    "id": "pudUp3RfLlIlyEj2",
+                    "name": "Gmail account 2"
+                }
+            },
+            "notes": "Gmail nativo (OAuth2) desde amazonminimalist11@gmail.com. TO: propietarios. CC: huésped."
+        },
+        {
+            "parameters": {},
+            "id": "dd566a7b-65fa-4d2f-8318-4b7227493828",
+            "name": "Sin Reserva",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                1940,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "toolDescription": "HERRAMIENTA PRINCIPAL. Verifica disponibilidad Y devuelve el precio calculado. Usa SIEMPRE esta herramienta cuando el usuario pregunte por disponibilidad o precios y tengas fechas + número de personas. Devuelve: disponibilidad (sí/no), precio por noche, total, y política de descuentos.",
+                "url": "=https://availability-api.parallext.cloud/availability?apt={apt}&start={start}&end={end}&num_guests={num_guests}",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "placeholderDefinitions": {
+                    "values": [
+                        {
+                            "name": "apt",
+                            "description": "ID del apartamento: amazon_minimalist o family_amazon_minimalist",
+                            "type": "string"
+                        },
+                        {
+                            "name": "start",
+                            "description": "Fecha de check-in en formato YYYY-MM-DD",
+                            "type": "string"
+                        },
+                        {
+                            "name": "end",
+                            "description": "Fecha de check-out en formato YYYY-MM-DD",
+                            "type": "string"
+                        },
+                        {
+                            "name": "num_guests",
+                            "description": "Número de huéspedes (requerido). Ejemplo: 2",
+                            "type": "number"
+                        }
+                    ]
+                }
+            },
+            "id": "745c08e4-03ca-4527-adef-10f6b4675b0a",
+            "name": "Check_Availability",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [
+                912,
+                624
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "Nu8trf1G0Zljoo9F",
+                    "name": "Availability API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "toolDescription": "PROHIBIDO usar al inicio de una conversación. PROHIBIDO usar si no tienes TODOS estos datos del huésped: nombre completo, email, teléfono, fechas exactas, número de personas y precio acordado. SOLO usar después de que el huésped diga EXPLÍCITAMENTE que quiere confirmar la reserva (ejemplo: 'sí quiero reservar', 'confirmo'). Esta herramienta bloquea fechas y es IRREVERSIBLE. Parámetros JSON obligatorios: apt, guest_name, guest_phone, guest_email, check_in (YYYY-MM-DD), check_out (YYYY-MM-DD), num_guests, price_per_night, total_price, notes.",
+                "method": "POST",
+                "url": "https://availability-api.parallext.cloud/bookings",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\"apt\": \"{apt}\", \"guest_name\": \"{guest_name}\", \"guest_phone\": \"{guest_phone}\", \"guest_email\": \"{guest_email}\", \"check_in\": \"{check_in}\", \"check_out\": \"{check_out}\", \"num_guests\": {num_guests}, \"price_per_night\": {price_per_night}, \"total_price\": {total_price}, \"notes\": \"{notes}\"}",
+                "placeholderDefinitions": {
+                    "values": [
+                        {
+                            "name": "apt",
+                            "description": "ID del apartamento: amazon_minimalist o family_amazon_minimalist",
+                            "type": "string"
+                        },
+                        {
+                            "name": "guest_name",
+                            "description": "Nombre completo del huesped",
+                            "type": "string"
+                        },
+                        {
+                            "name": "guest_phone",
+                            "description": "Telefono del huesped",
+                            "type": "string"
+                        },
+                        {
+                            "name": "guest_email",
+                            "description": "Email del huesped",
+                            "type": "string"
+                        },
+                        {
+                            "name": "check_in",
+                            "description": "Fecha de check-in YYYY-MM-DD",
+                            "type": "string"
+                        },
+                        {
+                            "name": "check_out",
+                            "description": "Fecha de check-out YYYY-MM-DD",
+                            "type": "string"
+                        },
+                        {
+                            "name": "num_guests",
+                            "description": "Numero de huespedes",
+                            "type": "number"
+                        },
+                        {
+                            "name": "price_per_night",
+                            "description": "Precio por noche en COP",
+                            "type": "number"
+                        },
+                        {
+                            "name": "total_price",
+                            "description": "Precio total en COP",
+                            "type": "number"
+                        },
+                        {
+                            "name": "notes",
+                            "description": "Notas adicionales de la reserva",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "id": "91393a46-d54a-4da4-86bd-84b3da0ce01f",
+            "name": "Confirm_Booking",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [
+                1120,
+                624
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "Nu8trf1G0Zljoo9F",
+                    "name": "Availability API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Extract [FOTO:apt_id] and [VIDEO:apt_id] tags from output\n// These are apartment IDs, NOT direct URLs (photos come from API)\nconst inputNode = $input.first();\nconst isFromAgent = inputNode?.json?.output !== undefined;\nconst output = isFromAgent \n    ? inputNode.json.output \n    : $('💬 Respuesta Rápida').item.json.output;\n\n// Extract apartment IDs for photos\nconst photoTagRegex = /\\[FOTO:(\\w+)\\]/g;\nconst videoTagRegex = /\\[VIDEO:(\\w+)\\]/g;\nconst photoApts = [];\nconst videoApts = [];\nlet match;\n\nwhile ((match = photoTagRegex.exec(output)) !== null) {\n    if (!photoApts.includes(match[1])) photoApts.push(match[1]);\n}\nwhile ((match = videoTagRegex.exec(output)) !== null) {\n    if (!videoApts.includes(match[1])) videoApts.push(match[1]);\n}\n\n// Clean text: remove tags\nlet cleanText = output\n    .replace(/\\[FOTO:\\w+\\]\\n?/g, '')\n    .replace(/\\[VIDEO:\\w+\\]\\n?/g, '')\n    .trim();\n\nreturn [{\n    json: {\n        clean_text: cleanText,\n        photo_apartments: photoApts,\n        video_apartments: videoApts,\n        has_photos: photoApts.length > 0,\n        has_videos: videoApts.length > 0,\n        account_id: $('🧭 Router Inteligente').item.json.account_id,\n        conversation_id: $('🧭 Router Inteligente').item.json.conversation_id\n    }\n}];"
+            },
+            "id": "code-parse-photos",
+            "name": "🖼️ Procesar Fotos",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1280,
+                80
+            ],
+            "notes": "Extrae URLs de fotos del output del agente. Separa el texto limpio de las fotos para enviarlas como adjuntos multimedia."
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $('🖼️ Procesar Fotos').item.json.has_photos }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "if-has-photos",
+            "name": "📸 ¿Tiene Fotos?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                1720,
+                80
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Build photo fetch items from apartment IDs\nconst apts = $('🖼️ Procesar Fotos').item.json.photo_apartments;\nconst items = apts.map(apt => ({\n    json: {\n        apt_id: apt,\n        api_url: \\`https://availability-api.parallext.cloud/apartments/\\${apt}/photos\\`,\n        account_id: $('🖼️ Procesar Fotos').item.json.account_id,\n        conversation_id: $('🖼️ Procesar Fotos').item.json.conversation_id\n    }\n}));\nreturn items;"
+            },
+            "id": "prepare-photo-items",
+            "name": "📋 Preparar Fotos",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1720,
+                -20
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $json.photo_url }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file"
+                        }
+                    },
+                    "timeout": 15000
+                }
+            },
+            "id": "download-photo",
+            "name": "📥 Descargar Foto",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2380,
+                -20
+            ],
+            "notes": "Descarga la imagen desde la URL para luego subirla como adjunto a Chatwoot."
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $('🖼️ Procesar Fotos').item.json.account_id }}/conversations/{{ $('🖼️ Procesar Fotos').item.json.conversation_id }}/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "contentType": "multipart-form-data",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "message_type",
+                            "value": "outgoing"
+                        },
+                        {
+                            "name": "content",
+                            "value": ""
+                        },
+                        {
+                            "parameterType": "formBinaryData",
+                            "name": "attachments[]",
+                            "inputDataFieldName": "data"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 15000
+                }
+            },
+            "id": "send-photo-attachment",
+            "name": "📱 Enviar Foto",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2600,
+                -20
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "JB1hfTI5yPolN2PD",
+                    "name": "WhatsApp Bot - Amazon Minimalist"
+                }
+            },
+            "notes": "Sube la foto como adjunto multimedia a Chatwoot via multipart/form-data."
+        },
+        {
+            "parameters": {
+                "jsCode": "// 🧭 Router Inteligente - bypasses LLM for trivial messages\nconst msg = $('📋 Extraer Datos').item.json.message_content.trim();\nconst name = $('📋 Extraer Datos').item.json.sender_name;\nconst lower = msg.toLowerCase().replace(/[!¡¿?.,;:]/g, '').trim();\n\n// Only match if the ENTIRE message is a greeting or ack (no compound messages)\nconst GREETINGS = /^(hola|hi|hello|hey|buenas?|buenos?\\s*(dias|tardes|noches)|que\\s*tal|saludos?)$/i;\nconst ACKS = /^(ok|okay|listo|vale|perfecto|genial|gracias|muchas\\s*gracias|de\\s*acuerdo|entendido|claro|super|excelente|buenisimo|chevere)$/i;\n\nlet useAgent = true;\nlet quickReply = '';\n\nif (GREETINGS.test(lower)) {\n    const isPhoneNumber = name && /^\\+?\\d+$/.test(name.trim());\n    const hasName = name && name.trim() && !isPhoneNumber;\n    const g = hasName ? `¡Hola, ${name}! 👋` : '¡Hola! 👋 ¿Con quién tengo el gusto?';\n    quickReply = hasName \n        ? `${g} Soy el asistente de Amazon Minimalist. ¿En qué puedo ayudarte? 😊`\n        : g;\n    useAgent = false;\n} else if (ACKS.test(lower)) {\n    quickReply = '¡Con gusto! Si necesitas algo más, aquí estoy 😊';\n    useAgent = false;\n}\n\nreturn [{\n    json: {\n        useAgent,\n        quickReply,\n        message_content: msg,\n        account_id: $('📋 Extraer Datos').item.json.account_id,\n        conversation_id: $('📋 Extraer Datos').item.json.conversation_id,\n        sender_name: name,\n        sender_phone: $('📋 Extraer Datos').item.json.sender_phone,\n        sender_email: $('📋 Extraer Datos').item.json.sender_email\n    }\n}];"
+            },
+            "id": "router-inteligente",
+            "name": "🧭 Router Inteligente",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                608,
+                80
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "rightValue": ""
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "id": "use-agent-check",
+                            "leftValue": "={{ $json.useAgent }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "if-usar-agente",
+            "name": "📌 ¿Usar agente?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                830,
+                80
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "manual",
+                "duplicateItem": false,
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "qr-output",
+                            "name": "output",
+                            "value": "={{ $('🧭 Router Inteligente').item.json.quickReply }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "respuesta-rapida",
+            "name": "💬 Respuesta Rápida",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                1050,
+                180
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $json.api_url }}",
+                "options": {
+                    "timeout": 10000
+                },
+                "authentication": "none"
+            },
+            "id": "fetch-photo-urls",
+            "name": "🔗 Obtener URLs",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1940,
+                -20
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Expand photo URLs into individual items for download loop\nconst response = $json;\nconst photos = response.photos || [];\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 5 photos max\nconst selected = photos.slice(0, 5);\n\nreturn selected.map(url => ({\n    json: { photo_url: url, account_id, conversation_id }\n}));"
+            },
+            "id": "expand-photo-urls",
+            "name": "📸 Expandir URLs",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2160,
+                -20
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $('🖼️ Procesar Fotos').item.json.account_id }}/conversations/{{ $('🖼️ Procesar Fotos').item.json.conversation_id }}/toggle_typing_status",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\"typing_status\": \"off\"}",
+                "options": {}
+            },
+            "id": "typing-off",
+            "name": "⌨️ Listo",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1720,
+                300
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "JB1hfTI5yPolN2PD",
+                    "name": "WhatsApp Bot - Amazon Minimalist"
+                }
+            }
+        }
+    ],
+    "pinData": {
+        "Chatwoot Webhook": [
+            {
+                "json": {
+                    "headers": {
+                        "host": "n8n.parallext.cloud",
+                        "user-agent": "rest-client/2.1.0 (linux-musl x86_64) ruby/3.4.4p34",
+                        "content-length": "2497",
+                        "accept": "application/json",
+                        "accept-encoding": "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
+                        "content-type": "application/json",
+                        "x-forwarded-for": "172.18.0.1",
+                        "x-forwarded-host": "n8n.parallext.cloud",
+                        "x-forwarded-port": "443",
+                        "x-forwarded-proto": "https",
+                        "x-forwarded-server": "a1df30656384",
+                        "x-real-ip": "172.18.0.1"
+                    },
+                    "params": {},
+                    "query": {},
+                    "body": {
+                        "account": {
+                            "id": 1,
+                            "name": "Parallext"
+                        },
+                        "additional_attributes": {},
+                        "content_attributes": {},
+                        "content_type": "text",
+                        "content": "Hola",
+                        "conversation": {
+                            "additional_attributes": {},
+                            "can_reply": true,
+                            "channel": "Channel::Whatsapp",
+                            "contact_inbox": {
+                                "id": 11,
+                                "contact_id": 1,
+                                "inbox_id": 6,
+                                "source_id": "573208010737",
+                                "created_at": "2026-02-17T16:11:39.842Z",
+                                "updated_at": "2026-02-17T16:11:39.842Z",
+                                "hmac_verified": false,
+                                "pubsub_token": "fgtk8zi4hmC8m5hnfnBV1KcQ"
+                            },
+                            "id": 11,
+                            "inbox_id": 6,
+                            "messages": [
+                                {
+                                    "id": 76,
+                                    "content": "Hola",
+                                    "account_id": 1,
+                                    "inbox_id": 6,
+                                    "conversation_id": 11,
+                                    "message_type": 0,
+                                    "created_at": 1771398991,
+                                    "updated_at": "2026-02-18T07:16:31.480Z",
+                                    "private": false,
+                                    "status": "sent",
+                                    "source_id": "wamid.HBgMNTczMjA4MDEwNzM3FQIAEhggQUMzRUJBNzQyRUU0N0VGM0U3MUU2QTlEMjI2RDM2OEQA",
+                                    "content_type": "text",
+                                    "content_attributes": {},
+                                    "sender_type": "Contact",
+                                    "sender_id": 1,
+                                    "external_source_ids": {},
+                                    "additional_attributes": {},
+                                    "processed_message_content": "Hola",
+                                    "sentiment": {},
+                                    "conversation": {
+                                        "assignee_id": 1,
+                                        "unread_count": 8,
+                                        "last_activity_at": 1771398991,
+                                        "contact_inbox": {
+                                            "source_id": "573208010737"
+                                        }
+                                    },
+                                    "sender": {
+                                        "additional_attributes": {},
+                                        "custom_attributes": {},
+                                        "email": null,
+                                        "id": 1,
+                                        "identifier": null,
+                                        "name": "Nir Levin",
+                                        "phone_number": "+573208010737",
+                                        "thumbnail": "",
+                                        "blocked": false,
+                                        "type": "contact"
+                                    }
+                                }
+                            ],
+                            "labels": [],
+                            "meta": {
+                                "sender": {
+                                    "additional_attributes": {},
+                                    "custom_attributes": {},
+                                    "email": null,
+                                    "id": 1,
+                                    "identifier": null,
+                                    "name": "Nir Levin",
+                                    "phone_number": "+573208010737",
+                                    "thumbnail": "",
+                                    "blocked": false,
+                                    "type": "contact"
+                                },
+                                "assignee": {
+                                    "id": 1,
+                                    "name": "Admin",
+                                    "available_name": "Admin",
+                                    "avatar_url": "",
+                                    "type": "user",
+                                    "availability_status": null,
+                                    "thumbnail": ""
+                                },
+                                "assignee_type": "User",
+                                "team": null,
+                                "hmac_verified": false
+                            },
+                            "status": "open",
+                            "custom_attributes": {},
+                            "snoozed_until": null,
+                            "unread_count": 8,
+                            "first_reply_created_at": "2026-02-17T19:24:36.428Z",
+                            "priority": null,
+                            "waiting_since": 1771398822,
+                            "agent_last_seen_at": 1771387864,
+                            "contact_last_seen_at": 0,
+                            "last_activity_at": 1771398991,
+                            "timestamp": 1771398991,
+                            "created_at": 1771344699,
+                            "updated_at": 1771398991.4823122
+                        },
+                        "created_at": "2026-02-18T07:16:31.480Z",
+                        "id": 76,
+                        "inbox": {
+                            "id": 6,
+                            "name": "Amazon_Minimalist"
+                        },
+                        "message_type": "incoming",
+                        "private": false,
+                        "sender": {
+                            "account": {
+                                "id": 1,
+                                "name": "Parallext"
+                            },
+                            "additional_attributes": {},
+                            "avatar": "",
+                            "custom_attributes": {},
+                            "email": null,
+                            "id": 1,
+                            "identifier": null,
+                            "name": "Nir Levin",
+                            "phone_number": "+573208010737",
+                            "thumbnail": "",
+                            "blocked": false
+                        },
+                        "source_id": "wamid.HBgMNTczMjA4MDEwNzM3FQIAEhggQUMzRUJBNzQyRUU0N0VGM0U3MUU2QTlEMjI2RDM2OEQA",
+                        "event": "message_created"
+                    },
+                    "webhookUrl": "https://n8n.parallext.cloud/webhook/1eff1133-3ba0-45cc-9ece-5f88d13c74d8",
+                    "executionMode": "production"
+                },
+                "pairedItem": {
+                    "item": 0
+                }
+            }
+        ]
+    },
+    "connections": {
+        "Chatwoot Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "🔒 Solo Mensajes Entrantes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔒 Solo Mensajes Entrantes": {
+            "main": [
+                [
+                    {
+                        "node": "⌨️ Escribiendo...",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "📋 Extraer Datos": {
+            "main": [
+                [
+                    {
+                        "node": "🧭 Router Inteligente",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini 2.0 Flash": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "🤖 Sales Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📝 Chat Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "🤖 Sales Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤖 Sales Agent": {
+            "main": [
+                [
+                    {
+                        "node": "🖼️ Procesar Fotos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📱 Enviar Respuesta": {
+            "main": [
+                [
+                    {
+                        "node": "📸 ¿Tiene Fotos?",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "📋 ¿Reserva Confirmada?",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "⌨️ Listo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📋 ¿Reserva Confirmada?": {
+            "main": [
+                [
+                    {
+                        "node": "📧 Email Confirmación",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Sin Reserva",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check_Availability": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "🤖 Sales Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Confirm_Booking": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "🤖 Sales Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🖼️ Procesar Fotos": {
+            "main": [
+                [
+                    {
+                        "node": "📱 Enviar Respuesta",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📸 ¿Tiene Fotos?": {
+            "main": [
+                [
+                    {
+                        "node": "📋 Preparar Fotos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "📋 Preparar Fotos": {
+            "main": [
+                [
+                    {
+                        "node": "🔗 Obtener URLs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📥 Descargar Foto": {
+            "main": [
+                [
+                    {
+                        "node": "📱 Enviar Foto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⌨️ Escribiendo...": {
+            "main": [
+                [
+                    {
+                        "node": "📋 Extraer Datos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🧭 Router Inteligente": {
+            "main": [
+                [
+                    {
+                        "node": "📌 ¿Usar agente?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📌 ¿Usar agente?": {
+            "main": [
+                [
+                    {
+                        "node": "🤖 Sales Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "💬 Respuesta Rápida",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "💬 Respuesta Rápida": {
+            "main": [
+                [
+                    {
+                        "node": "🖼️ Procesar Fotos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔗 Obtener URLs": {
+            "main": [
+                [
+                    {
+                        "node": "📸 Expandir URLs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📸 Expandir URLs": {
+            "main": [
+                [
+                    {
+                        "node": "📥 Descargar Foto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": false
+    },
+    "versionId": "65b51e31-1236-4b9d-93c3-2558bb8d72e3",
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "bf6329a6911b716c0a27e0900784d891d16a88f66b87ec3619199925d50b0067"
+    },
+    "id": "62wqvi7N8t8oWGBGq3GLa",
+    "tags": [
+        {
+            "updatedAt": "2026-02-18T05:11:00.283Z",
+            "createdAt": "2026-02-18T05:11:00.283Z",
+            "id": "ppqalymsW3g8PrO1",
+            "name": "Chatwoot"
+        },
+        {
+            "updatedAt": "2026-02-18T05:02:05.677Z",
+            "createdAt": "2026-02-18T05:02:05.677Z",
+            "id": "mzmSNDbwK0n69odJ",
+            "name": "AI Agent"
+        },
+        {
+            "updatedAt": "2026-02-18T05:02:05.646Z",
+            "createdAt": "2026-02-18T05:02:05.646Z",
+            "id": "ei42URLIOgAO3rGi",
+            "name": "Amazon Minimalist"
+        },
+        {
+            "updatedAt": "2026-02-18T05:02:05.599Z",
+            "createdAt": "2026-02-18T05:02:05.599Z",
+            "id": "JD3rbbHlLBJVhaF7",
+            "name": "WhatsApp"
+        }
+    ]
+}

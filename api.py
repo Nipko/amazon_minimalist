@@ -114,6 +114,7 @@ async def check_availability(
     apt: str = Query(..., description="Apartment ID (e.g. amazon_minimalist)"),
     start: str = Query(..., description="Check-in date (YYYY-MM-DD)"),
     end: str = Query(..., description="Check-out date (YYYY-MM-DD)"),
+    num_guests: Optional[int] = Query(None, description="Number of guests (optional, for price calculation)"),
     api_key: str = Security(verify_api_key),
 ):
     """
@@ -121,6 +122,7 @@ async def check_availability(
 
     Fetches calendars from Airbnb and Booking.com, checks for conflicts
     with existing bookings and manual blocks.
+    If num_guests is provided and dates are available, also returns pricing.
     """
     config = avail_checker.load_config()
 
@@ -132,7 +134,79 @@ async def check_availability(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
+    # Add pricing if available and num_guests provided
+    if result.get("available") and num_guests is not None:
+        import datetime as dt
+        details = load_details()
+        apt_data = details.get(apt, {})
+        pricing = apt_data.get("pricing", {})
+        discount_map = pricing.get("discount_by_guests", {})
+        base_price = pricing.get("base_price_per_night", 0)
+
+        # Calculate price per night based on guests
+        if apt == "amazon_minimalist":
+            if num_guests >= 3:
+                price_per_night = discount_map.get("3_guests", base_price)
+            elif num_guests == 2:
+                price_per_night = discount_map.get("2_guests", base_price)
+            else:
+                price_per_night = discount_map.get("1_guest", base_price)
+        elif apt == "family_amazon_minimalist":
+            if num_guests >= 5:
+                price_per_night = discount_map.get("5_6_guests", base_price)
+            elif num_guests >= 3:
+                price_per_night = discount_map.get("3_4_guests", base_price)
+            else:
+                price_per_night = discount_map.get("1_2_guests", base_price)
+        else:
+            price_per_night = base_price
+
+        # Calculate number of nights
+        try:
+            d_start = dt.datetime.strptime(start, "%Y-%m-%d").date()
+            d_end = dt.datetime.strptime(end, "%Y-%m-%d").date()
+            num_nights = (d_end - d_start).days
+        except ValueError:
+            num_nights = 0
+
+        result["pricing"] = {
+            "price_per_night": price_per_night,
+            "num_nights": num_nights,
+            "total_price": price_per_night * num_nights,
+            "currency": "COP",
+            "num_guests": num_guests,
+            "discount_by_stay": pricing.get("discount_by_stay", {}),
+            "deposit_policy": pricing.get("deposit_policy", ""),
+        }
+
     return result
+
+
+# --- Photos Endpoint (lightweight, for n8n direct call) ---
+
+@app.get("/apartments/{apt_id}/photos")
+async def get_apartment_photos(
+    apt_id: str,
+    request: Request,
+):
+    """
+    Lightweight endpoint: returns only photo and video URLs.
+    No authentication required — called by n8n directly, not by the LLM.
+    Photos are already public via /media/ endpoint.
+    """
+    details = load_details()
+
+    if apt_id not in details or apt_id in ("legal", "cross_apartment_policy"):
+        available = [k for k in details.keys() if k not in ("legal", "cross_apartment_policy")]
+        raise HTTPException(status_code=404, detail=f"Apartment '{apt_id}' not found. Available: {available}")
+
+    apt_data = details[apt_id]
+    return {
+        "apartment": apt_id,
+        "name": apt_data.get("name", ""),
+        "photos": [get_media_url(request, apt_id, p) for p in apt_data.get("photos", [])],
+        "videos": [get_media_url(request, apt_id, v) for v in apt_data.get("videos", [])],
+    }
 
 
 # --- Details Endpoints ---
@@ -348,6 +422,84 @@ async def serve_media(apt_id: str, filename: str):
         media_type=content_type,
         filename=filename,
     )
+
+
+# --- Booking Confirmation ---
+
+class BookingRequest(BaseModel):
+    apt: str
+    guest_name: str
+    guest_phone: str = ""
+    guest_email: str = ""
+    check_in: str   # YYYY-MM-DD
+    check_out: str  # YYYY-MM-DD
+    num_guests: int
+    price_per_night: int
+    total_price: int
+    notes: str = ""
+
+
+@app.post("/bookings")
+async def confirm_booking(
+    booking: BookingRequest,
+    api_key: str = Security(verify_api_key),
+):
+    """
+    Confirm a booking: blocks the dates and returns booking data for email.
+    This endpoint is called by the n8n AI Agent when a guest confirms.
+    """
+    config = avail_checker.load_config()
+    details = load_details()
+
+    if booking.apt not in config:
+        raise HTTPException(status_code=404, detail=f"Apartment '{booking.apt}' not found")
+
+    # First verify availability
+    avail_result = avail_checker.check_apartment_availability(
+        booking.apt, booking.check_in, booking.check_out, config
+    )
+    if not avail_result.get("available", False):
+        raise HTTPException(
+            status_code=409,
+            detail="Las fechas solicitadas ya no están disponibles. Conflicto con reservas existentes."
+        )
+
+    # Block the dates
+    block_result = block_dates.add_block(booking.apt, booking.check_in, booking.check_out)
+
+    # Build booking confirmation data
+    apt_name = details.get(booking.apt, {}).get("name", booking.apt)
+    apt_address = details.get(booking.apt, {}).get("location", {}).get("address", "")
+
+    confirmation = {
+        "status": "confirmed",
+        "booking": {
+            "apartment_name": apt_name,
+            "apartment_id": booking.apt,
+            "address": apt_address,
+            "guest_name": booking.guest_name,
+            "guest_phone": booking.guest_phone,
+            "guest_email": booking.guest_email,
+            "check_in": booking.check_in,
+            "check_out": booking.check_out,
+            "check_in_time": "3:00 PM",
+            "check_out_time": "11:00 AM",
+            "num_guests": booking.num_guests,
+            "price_per_night": booking.price_per_night,
+            "total_price": booking.total_price,
+            "currency": "COP",
+            "notes": booking.notes,
+        },
+        "block_created": block_result.get("status") == "success",
+        "emails_to_notify": [
+            "nirlevin89@gmail.com",
+            "sofia.henao96@gmail.com"
+        ],
+        "payment_methods": details.get(booking.apt, {}).get("payment_methods", {}),
+        "message": f"Reserva confirmada para {apt_name}. Fechas bloqueadas exitosamente."
+    }
+
+    return confirmation
 
 
 # --- Block Endpoints ---
