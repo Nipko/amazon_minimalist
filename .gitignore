@@ -5,3 +5,6 @@ __pycache__/
 *.svg
 square-image.*
 
+node_modules/
+package-lock.json
+*.js.bak
