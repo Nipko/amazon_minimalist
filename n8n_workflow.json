@@ -513,8 +513,7 @@
                         "response": {
                             "responseFormat": "file"
                         }
-                    },
-                    "timeout": 15000
+                    }
                 }
             },
             "id": "download-photo",
@@ -530,7 +529,7 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $('🖼️ Procesar Fotos').item.json.account_id }}/conversations/{{ $('🖼️ Procesar Fotos').item.json.conversation_id }}/messages",
+                "url": "=https://chatwoot.parallext.cloud/api/v1/accounts/{{ $(\"📸 Expandir URLs\").item.json.account_id }}/conversations/{{ $(\"📸 Expandir URLs\").item.json.conversation_id }}/messages",
                 "authentication": "genericCredentialType",
                 "genericAuthType": "httpHeaderAuth",
                 "contentType": "multipart-form-data",
@@ -543,7 +542,7 @@
                         },
                         {
                             "name": "content",
-                            "value": ""
+                            "value": "📸"
                         },
                         {
                             "parameterType": "formBinaryData",
@@ -553,7 +552,12 @@
                     ]
                 },
                 "options": {
-                    "timeout": 15000
+                    "response": {
+                        "response": {
+                            "responseFormat": "text"
+                        }
+                    },
+                    "timeout": 30000
                 }
             },
             "id": "send-photo-attachment",
@@ -570,7 +574,8 @@
                     "name": "WhatsApp Bot - Amazon Minimalist"
                 }
             },
-            "notes": "Sube la foto como adjunto multimedia a Chatwoot via multipart/form-data."
+            "notes": "Sube la foto como adjunto multimedia a Chatwoot via multipart/form-data.",
+            "onError": "continueRegularOutput"
         },
         {
             "parameters": {
@@ -662,7 +667,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Expand photo URLs into individual items for download loop\nconst response = $json;\nconst photos = response.photos || [];\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 5 photos max\nconst selected = photos.slice(0, 5);\n\nreturn selected.map(url => ({\n    json: { photo_url: url, account_id, conversation_id }\n}));"
+                "jsCode": "// Expand photo URLs into individual items for download loop\nconst response = $input.first().json;\nconst photos = response.photos || [];\n\n// Pass through account/conversation from earlier in the chain\nconst account_id = $('🖼️ Procesar Fotos').item.json.account_id;\nconst conversation_id = $('🖼️ Procesar Fotos').item.json.conversation_id;\n\n// Limit to 5 photos max\nconst selected = photos.slice(0, 5);\n\nreturn selected.map(url => ({\n    json: {\n        photo_url: url,\n        account_id: account_id,\n        conversation_id: conversation_id\n    }\n}));"
             },
             "id": "expand-photo-urls",
             "name": "📸 Expandir URLs",
