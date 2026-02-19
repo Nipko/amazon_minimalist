@@ -682,7 +682,13 @@
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={\"typing_status\": \"off\"}",
-                "options": {}
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "text"
+                        }
+                    }
+                }
             },
             "id": "typing-off",
             "name": "⌨️ Listo",
@@ -697,7 +703,8 @@
                     "id": "JB1hfTI5yPolN2PD",
                     "name": "WhatsApp Bot - Amazon Minimalist"
                 }
-            }
+            },
+            "onError": "continueRegularOutput"
         }
     ],
     "pinData": {
