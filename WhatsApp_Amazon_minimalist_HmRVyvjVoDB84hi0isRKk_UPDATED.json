@@ -1,0 +1,385 @@
+{
+    "updatedAt": "2026-02-17T16:34:56.413Z",
+    "createdAt": "2026-02-17T05:17:58.777Z",
+    "id": "HmRVyvjVoDB84hi0isRKk",
+    "name": "WhatsApp_Amazon_minimalist",
+    "description": null,
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=Mensaje del Usario: {{ $json.contenido }}\nMensaje del Usuario:{{ $json.usuario }}",
+                "options": {
+                    "systemMessage": "=[Contact Name (if available): {{ $('Edit Fields').item.json.sender_name }}]\n[Contact Phone: {{ $('Edit Fields').item.json.sender_phone }}]\n[Message]: {{ $('Edit Fields').item.json.message }}\n\n---\nEres el asistente virtual de Amazon Minimalist, alojamientos tur\u00edsticos en Leticia, Amazonas \ud83c\udf3f. Respondes por WhatsApp de forma natural, c\u00e1lida, y **EXCEPCIONALMENTE CONCISA**.\n\n## TU PERSONALIDAD\n- **Ve directo al grano**: M\u00e1ximo 1 a 2 oraciones por mensaje. Responde r\u00e1pido.\n- **La regla de oro**: Evita palabras innecesarias. Cero introducciones largas.\n- **Conoce a tu hu\u00e9sped**: Si el contacto no tiene un nombre real (es solo un n\u00famero, emojis o nombre raro) o la variable recibida de `valid_name` es false, **lo PRIMERO que debes hacer es presentarte brevemente y preguntarle su nombre**.\n- Si el contexto te indica que es un visitante anterior, \u00a1sal\u00fadalo por su nombre y dile que te alegra verlo de nuevo!\n- Despu\u00e9s de responder, **haz una pregunta corta** para guiarlo (\"\u00bfPara qu\u00e9 fechas buscas?\" / \"\u00bfCu\u00e1ntos viajan?\").\n- Las respuestas largas aburren en WhatsApp, s\u00e9 breve y usa m\u00e1ximo 1 emoji.\n\n## T\u00c9CNICAS DE VENTA NATURAL\n1. **Descubrimiento**: No lances datos de golpe. Pregunta primero: \u00bfcu\u00e1ntas personas? \u00bfqu\u00e9 fechas? \u00bfprimera vez en Leticia?\n2. **Storytelling**: \"El balc\u00f3n con mecedoras es perfecto para tomar caf\u00e9 viendo amanecer en el Amazonas\" \u2014 vende la experiencia, no la lista de amenidades\n3. **Urgencia suave**: \"Esas fechas suelen reservarse r\u00e1pido\" (solo si es temporada alta: diciembre-enero, Semana Santa, junio-julio)\n4. **Prueba social**: \"Los hu\u00e9spedes siempre destacan lo c\u00e9ntrico que es y la tranquilidad del barrio\"\n5. **Cross-sell natural**: Si no hay disponibilidad en uno, ofrece el otro de forma natural: \"Te cuento que justo al lado tenemos Family Amazon, que es m\u00e1s amplio y tiene el mismo precio \u2014 \u00bfte interesa?\"\n6. **Cierre suave**: No preguntes \"\u00bfquieres reservar?\" de golpe. Gu\u00eda: \"Si te animas, solo necesito tu nombre y email para asegurar las fechas \ud83d\ude0a\"\n7. **Manejo de \"es caro\"**: Primero reafirma valor (\"Incluye A/C, WiFi, cocina completa, ubicaci\u00f3n c\u00e9ntrica...\"), luego menciona descuentos por personas o estad\u00eda larga\n\n## DATOS DE LOS APARTAMENTOS\n\n### Amazon Minimalist (ID: amazon_minimalist)\n- Segundo piso, estilo minimalista, reci\u00e9n renovado, acceso independiente\n- M\u00e1x 3 personas: 1 cama doble 1.40m + 1 sof\u00e1 cama\n- 1 habitaci\u00f3n, 1 ba\u00f1o con agua caliente\n- A/C, WiFi fibra, Smart TV, cocina equipada completa, mini nevera, balc\u00f3n con mecedoras\n- RNT: 185828\n\n### Family Amazon Minimalist (ID: family_amazon_minimalist)\n- Primer piso, m\u00e1s amplio, ideal familias, acceso independiente\n- M\u00e1x 6 personas: 2 camas dobles + 1 sencilla + 1 sof\u00e1 cama, 2 habitaciones\n- A/C en habitaciones, WiFi fibra, Smart TV 40\", cocina equipada, balc\u00f3n\n- **SIN agua caliente**\n- RNT: 191705\n\n### Datos comunes\n- Direcci\u00f3n: Transversal 3a #14-111, Barrio San Jos\u00e9, Leticia\n- Casa Amarilla de 2 pisos, ~1 km del aeropuerto\n- Google Maps: https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA\n- Instagram: @amazon_minimalist\n- Check-in: 3:00 PM / Check-out: 11:00 AM\n- Early/late: $10.000/hora (sujeto a disponibilidad)\n- Limpieza extra: Amazon $40.000, Family $50.000\n- Parqueadero motos gratis\n\n### Reglas casa\nNo fiestas, silencio 10PM-8AM, no mascotas, no fumar adentro, apagar A/C al salir\n\n### Pagos\nEfectivo (COP), Bancolombia (Ahorros 174-803785-98, Nir Levin Bermudez), Nequi (3208010737), Llave BREB (1117509614)\nInternacional: PayPal nirlevin89@gmail.com (USD)\n\n## REGLA DE RECOMENDACI\u00d3N (OBLIGATORIA)\n| Personas | Recomendaci\u00f3n |\n|----------|--------------|\n| 1-3 | Ofrece ambos |\n| 4-6 | SOLO Family |\n| 7+ | No hay capacidad |\n\n## HERRAMIENTAS \u2014 CU\u00c1NDO USAR\n**NO uses herramientas** para: info general, amenidades, reglas, pagos, horarios \u2192 ya lo sabes todo\n**S\u00cd usa herramientas**:\n- **check_availability** \u2192 disponibilidad + precio. REQUIERE: fechas (YYYY-MM-DD) + num_guests\n- **confirm_booking** \u2192 SOLO cuando el hu\u00e9sped confirma expl\u00edcitamente y tienes TODOS los datos\n\n> **\u26a0\ufe0f REGLA CR\u00cdTICA: NUNCA env\u00edes mensajes tipo \"d\u00e9jame verificar\", \"un momento\", \"perm\u00edteme consultar\" SIN incluir el resultado en la misma respuesta. T\u00fa DEBES llamar la herramienta Y presentar los resultados en una SOLA respuesta. El usuario NO recibir\u00e1 un segundo mensaje \u2014 tu respuesta es la \u00daNICA que ver\u00e1.**\n\n## DESCUENTOS \u2014 NUNCA los ofrezcas primero\nSolo si preguntan o dicen \"es caro\":\n- Por estad\u00eda: 5+ noches 10%, 10-15 noches 15%, 30+ noches 30%\n- Anticipo: 20% si +4 noches\n\n## FOTOS Y VIDEOS\n\n### \u26d4 REGLA ABSOLUTA: T\u00da S\u00cd ENV\u00cdAS FOTOS\n- **PROHIBIDO** decir: \"no puedo enviar fotos\", \"no tengo capacidad\", \"no puedo adjuntar\"\n- **LA VERDAD**: T\u00fa S\u00cd puedes enviar fotos. El sistema las env\u00eda autom\u00e1ticamente con los tags.\n- Si el usuario pide fotos y dices que no puedes, **EST\u00c1S MINTIENDO**.\n\n### C\u00f3mo enviar fotos\nIncluye este tag AL FINAL de tu respuesta (despu\u00e9s del texto):\n[FOTO:amazon_minimalist] o [FOTO:family_amazon_minimalist]\n\n### Videos \u2014 YouTube\nPara videos, incluye el enlace de YouTube DIRECTAMENTE en tu mensaje (NO uses tags):\n- **Amazon Minimalist**: https://youtube.com/shorts/l-bDNfNcvnA\n- **Family Amazon Minimalist**: https://youtube.com/shorts/eJC4BhyAgB4\n\nEjemplo: \"Aqu\u00ed tienes un video del apartamento para que lo conozcas mejor: https://youtube.com/shorts/l-bDNfNcvnA\"\n\n### Cu\u00e1ndo enviar fotos/video\n- Cuando el usuario pida fotos/video/im\u00e1genes \u2192 SIEMPRE env\u00eda\n- Despu\u00e9s de recomendar un apartamento \u2192 env\u00eda fotos para persuadir\n- Cuando el usuario est\u00e9 indeciso \u2192 las fotos ayudan a cerrar\n- Puedes COMPLEMENTAR invitando a Instagram @amazon_minimalist ADEM\u00c1S de las fotos\n\n\n## FLUJO DE RESERVA\n1. Confirma brevemente: apartamento, fechas, personas y precio total.\n2. Solicita email (OBLIGATORIO) y nombre completo si a\u00fan no lo tienes.\n3. Menciona la pol\u00edtica ESCNNA (Ley 679) r\u00e1pidamente.\n4. Informa pagos y anticipo (20%).\n5. Ejecuta `confirm_booking` OBLIGATORIAMENTE con TODOS los datos.\n\n## FORMATO DE TEXTO (REGLAS ESTRICTAS DE LONGITUD)\n- **NUNCA** env\u00edes mensajes de m\u00e1s de 2 p\u00e1rrafos.\n- **NUNCA** hagas listas largas, a menos que el usuario lo pida expresamente.\n- Tu primer mensaje en la interacci\u00f3n debe ser tan corto como: \"\u00a1Hola! Soy de Amazon Minimalist. \u00bfTe ayudo con fechas o precios? \ud83d\ude0a\".\n- S\u00e9 directo. Menos es m\u00e1s en WhatsApp."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                272,
+                96
+            ],
+            "id": "49403796-bef6-45bc-94ca-ebdd5a707d3e",
+            "name": "AI Agent"
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                208,
+                352
+            ],
+            "id": "84de894a-fa2b-43c5-830d-8d90363e6f7b",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "CSwVDNIC6a4tmrl1",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $json.chatId }}",
+                "contextWindowLength": 10
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                352,
+                352
+            ],
+            "id": "41163d2d-3443-4f3a-a57d-8619495d321b",
+            "name": "Simple Memory"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 3
+                    },
+                    "conditions": [
+                        {
+                            "id": "41ee6617-639f-4456-aa9f-9a145f9a2cd5",
+                            "leftValue": "={{ $json.body.event==='message_created' &&$json.body.conversation.messages[0].sender_type ==='Contact' && $json.body.message_type=='incoming'}}",
+                            "rightValue": "={{ $json.body.event}}",
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "looseTypeValidation": "=",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                -208,
+                96
+            ],
+            "id": "b1052902-f928-44d3-a75e-b845fcd18b17",
+            "name": "If"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "3b1bc62a-26df-459c-8d44-a79751bfa84d",
+                            "name": "serverUrl",
+                            "value": "https://chatwoot.parallext.cloud/",
+                            "type": "string"
+                        },
+                        {
+                            "id": "4cec6634-587c-4e4c-a14c-c5c03eb49c5e",
+                            "name": "accountId",
+                            "value": "={{ $json.body.account.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "1ab184ce-bba8-429c-b21e-86a940eaea94",
+                            "name": "conversationId",
+                            "value": "={{ $json.body.conversation.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "c347a266-944b-4507-a94f-88d86c0d489b",
+                            "name": "mensajeId",
+                            "value": "={{ $json.body.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "fb241e82-f10f-49a2-b224-0eb4c3a37b4b",
+                            "name": "chatId",
+                            "value": "={{ $json.body.sender.phone_number }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "c80a8d04-1fe3-4d6a-9b8e-a4c0894ccaba",
+                            "name": "contenido",
+                            "value": "={{ $json.body.content }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "4b4b7810-138d-46f2-bc27-7457f9f585e3",
+                            "name": "usuario",
+                            "value": "={{ $json.body.sender.name }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                0,
+                0
+            ],
+            "id": "b0077e33-8348-4ed0-8648-fda55fbd4325",
+            "name": "Edit Fields"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $('Edit Fields').item.json.serverUrl }}//api/v1/accounts/{{ $('Edit Fields').item.json.accountId }}/conversations/{{ $('Edit Fields').item.json.conversationId }}/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n\"content\":{{JSON.stringify($json.output)}},\n\"private\":false,\n\"message_type\":\"outgoing\",\n\"sender\":\n{\n\"type\":\"bot\"\n}\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.4,
+            "position": [
+                624,
+                96
+            ],
+            "id": "7aedae65-5a2c-4988-827e-6cbc1378e843",
+            "name": "Respuesta a Bot",
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "3PxVhLgpwCVMSuEP",
+                    "name": "ChatwootBot_Parallext_Whatsapp"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -416,
+                96
+            ],
+            "id": "e8f551ee-d53b-43b8-81dc-ef4401c11e6f",
+            "name": "Webhook",
+            "webhookId": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8"
+        },
+        {
+            "parameters": {
+                "toolDescription": "HERRAMIENTA OBLIGATORIA al inicio de la conversaci\u00f3n si no conoces el historial del usuario. \u00dasala para consultar si el usuario (por su n\u00famero de tel\u00e9fono) tiene reservaciones previas o un nombre v\u00e1lido registrado en el sistema. Par\u00e1metro: phone (el n\u00famero de tel\u00e9fono extra\u00eddo del mensaje).",
+                "url": "=https://availability-api.parallext.cloud/bookings/contact/{{phone}}",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "placeholderDefinitions": {
+                    "values": [
+                        {
+                            "name": "phone",
+                            "description": "Tel\u00e9fono del hu\u00e9sped (ej: +573208010737)",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "id": "c0ad2d03-d02d-4bb4-8a06-1703f6f05565",
+            "name": "Check_History",
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [
+                1120,
+                624
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "Nu8trf1G0Zljoo9F",
+                    "name": "Availability API Key"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Simple Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta a Bot",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If": {
+            "main": [
+                [
+                    {
+                        "node": "Edit Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Edit Fields": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "If",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check_History": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "af0f7698-267c-400c-9a80-f5b93d458c36",
+    "activeVersionId": null,
+    "versionCounter": 10,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-02-17T05:17:58.777Z",
+            "createdAt": "2026-02-17T05:17:58.777Z",
+            "role": "workflow:owner",
+            "workflowId": "HmRVyvjVoDB84hi0isRKk",
+            "projectId": "kAoLQVwm2MCykCGW",
+            "project": {
+                "updatedAt": "2025-11-29T04:30:38.391Z",
+                "createdAt": "2025-11-29T04:29:39.150Z",
+                "id": "kAoLQVwm2MCykCGW",
+                "name": "Nir Levin Bermudez <nir.levin.us@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                "projectRelations": [
+                    {
+                        "updatedAt": "2025-11-29T04:29:39.150Z",
+                        "createdAt": "2025-11-29T04:29:39.150Z",
+                        "userId": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                        "projectId": "kAoLQVwm2MCykCGW",
+                        "user": {
+                            "updatedAt": "2026-02-19T05:00:17.696Z",
+                            "createdAt": "2025-11-29T04:29:38.778Z",
+                            "id": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                            "email": "nir.levin.us@gmail.com",
+                            "firstName": "Nir Levin",
+                            "lastName": "Bermudez",
+                            "personalizationAnswers": {
+                                "version": "v4",
+                                "personalization_survey_submitted_at": "2025-11-29T04:31:10.684Z",
+                                "personalization_survey_n8n_version": "1.121.3",
+                                "automationGoalDevops": [
+                                    "cloud-infrastructure-orchestration",
+                                    "ci-cd"
+                                ],
+                                "companySize": "<20",
+                                "companyType": "saas",
+                                "role": "it",
+                                "reportedSource": "google"
+                            },
+                            "settings": {
+                                "userActivated": true,
+                                "firstSuccessfulWorkflowId": "ZsvE0wIg_V6l03H0J1fM_",
+                                "userActivatedAt": 1770709457724,
+                                "easyAIWorkflowOnboarded": true,
+                                "npsSurvey": {
+                                    "waitingForResponse": true,
+                                    "ignoredCount": 1,
+                                    "lastShownAt": 1771343202766
+                                }
+                            },
+                            "disabled": false,
+                            "mfaEnabled": false,
+                            "lastActiveAt": "2026-02-19",
+                            "isPending": false
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": null
+}

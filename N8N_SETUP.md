@@ -80,6 +80,38 @@
 
 ---
 
+## 🛠️ Herramienta de Gestión (n8n Manager)
+
+Hemos incluido un script Python **`n8n_manager.py`** para gestionar tus workflows programáticamente sin entrar a la UI.
+
+### Configuración
+1. Genera una API Key en n8n: **Settings → API → Create API Key**
+2. Agrégala a tu archivo `.env`:
+   ```bash
+   N8N_API_KEY=tu-api-key-aqui
+   ```
+
+### Comandos disponibles
+
+| Comando | Descripción | Ejemplo |
+|---|---|---|
+| **Listar** | Ver todos tus workflows y su estado | `python n8n_manager.py list` |
+| **Ver** | Ver el JSON completo de un workflow | `python n8n_manager.py get <ID>` |
+| **Exportar** | Guardar backup a archivo JSON local | `python n8n_manager.py export <ID>` |
+| **Update Prompt** | Actualizar el system prompt del agente | `python n8n_manager.py update-prompt <ID>` |
+| **Activar** | Activar un workflow | `python n8n_manager.py activate <ID>` |
+| **Desactivar** | Desactivar un workflow | `python n8n_manager.py deactivate <ID>` |
+| **Ejecuciones** | Ver historial de ejecuciones recientes | `python n8n_manager.py executions <ID>` |
+
+### Modo Interactivo
+Simplemente ejecuta:
+```bash
+python n8n_manager.py
+```
+Y sigue el menú en pantalla.
+
+---
+
 ## Flujo Visual
 
 ```

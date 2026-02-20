@@ -11,7 +11,11 @@ from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+import asyncio
+import httpx
+import time
+import asyncpg
 
 # Import existing modules
 import avail_checker
@@ -38,6 +42,40 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Webhook Proxy Config ---
+N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL", "https://n8n.parallext.cloud/webhook/1eff1133-3ba0-45cc-9ece-5f88d13c74d8")
+DEBOUNCE_WAIT_SECONDS = 4.0
+
+# Store pending messages by conversation_id: { conversation_id: {"timer": task, "payload": original_payload, "messages": [text1, text2]} }
+pending_webhooks: Dict[int, Any] = {}
+
+# --- Database Config ---
+DB_USER = os.environ.get("DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "postgres")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_NAME = os.environ.get("DB_NAME", "postgres")
+
+# Global pool
+db_pool = None
+
+@app.on_event("startup")
+async def startup():
+    global db_pool
+    try:
+        db_pool = await asyncpg.create_pool(
+            user=DB_USER, password=DB_PASSWORD, database=DB_NAME, host=DB_HOST, port=DB_PORT
+        )
+        print("Connected to PostgreSQL database.")
+    except Exception as e:
+        print(f"Warning: Could not connect to database at startup: {e}")
+
+@app.on_event("shutdown")
+async def shutdown():
+    global db_pool
+    if db_pool:
+        await db_pool.close()
 
 # --- Security ---
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -464,8 +502,41 @@ async def confirm_booking(
             detail="Las fechas solicitadas ya no están disponibles. Conflicto con reservas existentes."
         )
 
-    # Block the dates
+    # Bloquear las fechas en el calendario
     block_result = block_dates.add_block(booking.apt, booking.check_in, booking.check_out)
+
+    # Registrar reserva en PostgreSQL
+    global db_pool
+    db_success = False
+    if db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                # 1. Asegurar que el contacto existe
+                if booking.guest_phone:
+                    await conn.execute(
+                        """
+                        INSERT INTO conversaciones (telefono, nombre_contacto, es_nombre_valido)
+                        VALUES ($1, $2, TRUE)
+                        ON CONFLICT (telefono) DO UPDATE SET nombre_contacto = $2, es_nombre_valido = TRUE
+                        """,
+                        booking.guest_phone, booking.guest_name
+                    )
+
+                    # 2. Insertar reserva
+                    import datetime
+                    d_in = datetime.datetime.strptime(booking.check_in, "%Y-%m-%d").date()
+                    d_out = datetime.datetime.strptime(booking.check_out, "%Y-%m-%d").date()
+
+                    await conn.execute(
+                        """
+                        INSERT INTO reservas (fk_telefono, apartamento_id, nombre_reserva, check_in, check_out, num_huespedes, precio_total)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        """,
+                        booking.guest_phone, booking.apt, booking.guest_name, d_in, d_out, booking.num_guests, float(booking.total_price)
+                    )
+                    db_success = True
+        except Exception as e:
+            print(f"Error saving to database: {e}")
 
     # Build booking confirmation data
     apt_name = details.get(booking.apt, {}).get("name", booking.apt)
@@ -489,6 +560,7 @@ async def confirm_booking(
             "total_price": booking.total_price,
             "currency": "COP",
             "notes": booking.notes,
+            "db_saved": db_success
         },
         "block_created": block_result.get("status") == "success",
         "emails_to_notify": [
@@ -500,6 +572,109 @@ async def confirm_booking(
     }
 
     return confirmation
+
+
+@app.get("/bookings/contact/{phone}")
+async def get_booking_history(
+    phone: str,
+    api_key: str = Security(verify_api_key),
+):
+    """
+    Get booking history and last conversation summary for a specific phone number.
+    Used by the AI Agent to remember previous interactions and validate context.
+    """
+    global db_pool
+    if not db_pool:
+        # En caso de no tener DB, retornar vacío temporalmente
+        return {"phone": phone, "history": [], "last_summary": ""}
+
+    # Remover el '+' posible para normalizar, aunque asuma formato uniforme
+    clean_phone = phone.replace(" ", "").strip()
+
+    history = []
+    summary = ""
+    es_nombre_valido = False
+    nombre_contacto = ""
+
+    try:
+        async with db_pool.acquire() as conn:
+            # Info del contacto
+            row_contact = await conn.fetchrow(
+                "SELECT nombre_contacto, ultimo_resumen, es_nombre_valido FROM conversaciones WHERE telefono = $1", 
+                clean_phone
+            )
+            if row_contact:
+                nombre_contacto = row_contact["nombre_contacto"]
+                summary = row_contact["ultimo_resumen"] or ""
+                es_nombre_valido = row_contact["es_nombre_valido"]
+
+            # Reservas previas
+            rows_reservas = await conn.fetch(
+                """
+                SELECT apartamento_id, check_in, check_out, num_huespedes, precio_total, creado_en 
+                FROM reservas 
+                WHERE fk_telefono = $1 
+                ORDER BY check_in DESC
+                """, 
+                clean_phone
+            )
+            for r in rows_reservas:
+                history.append({
+                    "apartment_id": r["apartamento_id"],
+                    "check_in": r["check_in"].isoformat(),
+                    "check_out": r["check_out"].isoformat(),
+                    "num_guests": r["num_huespedes"],
+                    "total_price": float(r["precio_total"]),
+                    "booked_at": r["creado_en"].isoformat() if r["creado_en"] else None
+                })
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    return {
+        "phone": clean_phone,
+        "name": nombre_contacto,
+        "valid_name": es_nombre_valido,
+        "last_summary": summary,
+        "past_bookings": history,
+        "has_history": len(history) > 0
+    }
+
+class SummaryRequest(BaseModel):
+    phone: str
+    name: str = ""
+    summary: str
+
+@app.post("/conversations/summary")
+async def save_conversation_summary(
+    data: SummaryRequest,
+    api_key: str = Security(verify_api_key),
+):
+    """
+    Guarda el resumen de la última conversación de un usuario en la tabla `conversaciones`.
+    """
+    global db_pool
+    if not db_pool:
+         return {"error": "Database not configured"}
+    
+    clean_phone = data.phone.replace(" ", "").strip()
+    
+    try:
+         async with db_pool.acquire() as conn:
+             await conn.execute(
+                 """
+                 INSERT INTO conversaciones (telefono, nombre_contacto, ultimo_resumen, fecha_ultimo_mensaje)
+                 VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+                 ON CONFLICT (telefono) DO UPDATE 
+                 SET ultimo_resumen = $3, fecha_ultimo_mensaje = CURRENT_TIMESTAMP,
+                     nombre_contacto = COALESCE(NULLIF($2, ''), conversaciones.nombre_contacto)
+                 """,
+                 clean_phone, data.name, data.summary
+             )
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=f"Database error: {e}")
+         
+    return {"status": "success", "message": "Resumen guardado correctamente."}
 
 
 # --- Block Endpoints ---
@@ -580,3 +755,98 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"error": "Internal server error", "detail": str(exc)},
     )
+
+
+# --- Webhook Debounce Proxy ---
+
+async def send_to_n8n(conversation_id: int):
+    """Wait for debounce period, consolidate messages, and send to n8n."""
+    await asyncio.sleep(DEBOUNCE_WAIT_SECONDS)
+    
+    # After sleep, execute the webhook
+    data = pending_webhooks.pop(conversation_id, None)
+    if not data:
+        return
+
+    payload = data["payload"]
+    messages = data["messages"]
+    
+    # Consolidate messages by joining them with newlines
+    consolidated_text = "\n".join(messages)
+    
+    # Overwrite the payload content with the consolidated text
+    try:
+        payload["content"] = consolidated_text
+        if "conversation" in payload and "messages" in payload["conversation"] and len(payload["conversation"]["messages"]) > 0:
+            payload["conversation"]["messages"][0]["content"] = consolidated_text
+            payload["conversation"]["messages"][0]["processed_message_content"] = consolidated_text
+    except Exception as e:
+        print(f"Error consolidating payload: {e}")
+
+    # Forward to n8n
+    print(f"Forwarding {len(messages)} messages to n8n for conversation {conversation_id}:\n{consolidated_text}")
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(N8N_WEBHOOK_URL, json=payload)
+            print(f"n8n response: {resp.status_code}")
+    except Exception as e:
+        print(f"Error sending to n8n: {e}")
+
+@app.post("/webhook/chatwoot")
+async def chatwoot_webhook(request: Request):
+    """
+    Proxy to receive webhooks from Chatwoot, group them by conversation within
+    a short time window (debounce), and forward a single consolidated message to n8n.
+    """
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON"}
+
+    # We only debounce incoming message_created events
+    if payload.get("event") != "message_created" or payload.get("message_type") != "incoming":
+        # Forward immediately without debouncing
+        asyncio.create_task(forward_immediately(payload))
+        return {"status": "ok", "forwarded_async": True}
+
+    conversation = payload.get("conversation", {})
+    conversation_id = conversation.get("id")
+    
+    content = payload.get("content", "").strip()
+
+    if not conversation_id or not content:
+        # Invalid payload or no text, forward immediately
+        asyncio.create_task(forward_immediately(payload))
+        return {"status": "ok", "forwarded_async": True}
+
+    # Debounce logic
+    global pending_webhooks
+    
+    if conversation_id in pending_webhooks:
+        # We already have a pending timer for this conversation.
+        # Cancel the existing timer, append the message, and start a new timer.
+        pending_webhooks[conversation_id]["timer"].cancel()
+        pending_webhooks[conversation_id]["messages"].append(content)
+        
+        # Start new timer
+        new_task = asyncio.create_task(send_to_n8n(conversation_id))
+        pending_webhooks[conversation_id]["timer"] = new_task
+    else:
+        # First message for this conversation newly arriving
+        new_task = asyncio.create_task(send_to_n8n(conversation_id))
+        pending_webhooks[conversation_id] = {
+            "timer": new_task,
+            "payload": payload,  # Base payload to use for forwarding
+            "messages": [content]
+        }
+        
+    return {"status": "ok", "message": "debounced"}
+
+
+async def forward_immediately(payload: dict):
+    """Forward a non-debounced webhook immediately to n8n."""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            await client.post(N8N_WEBHOOK_URL, json=payload)
+    except Exception as e:
+        print(f"Error forwarding unhandled webhook to n8n: {e}")
