@@ -1,10 +1,25 @@
+# Ignore environment files
+.env
+
+# Python
 __pycache__/
 *.pyc
-.env
+.venv/
+
+# Images (tracked via LFS or not needed in repo)
 *.png
 *.svg
 square-image.*
 
+# Node.js (not needed)
 node_modules/
 package-lock.json
-*.js.bak
+package.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
