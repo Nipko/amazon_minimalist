@@ -1,0 +1,343 @@
+{
+    "updatedAt": "2026-02-17T16:34:56.413Z",
+    "createdAt": "2026-02-17T05:17:58.777Z",
+    "id": "HmRVyvjVoDB84hi0isRKk",
+    "name": "WhatsApp_Amazon_minimalist",
+    "description": null,
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=Mensaje del Usario: {{ $json.contenido }}\nMensaje del Usuario:{{ $json.usuario }}",
+                "options": {
+                    "systemMessage": ""
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                272,
+                96
+            ],
+            "id": "49403796-bef6-45bc-94ca-ebdd5a707d3e",
+            "name": "AI Agent"
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                208,
+                352
+            ],
+            "id": "84de894a-fa2b-43c5-830d-8d90363e6f7b",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "CSwVDNIC6a4tmrl1",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $json.chatId }}",
+                "contextWindowLength": 10
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                352,
+                352
+            ],
+            "id": "41163d2d-3443-4f3a-a57d-8619495d321b",
+            "name": "Simple Memory"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 3
+                    },
+                    "conditions": [
+                        {
+                            "id": "41ee6617-639f-4456-aa9f-9a145f9a2cd5",
+                            "leftValue": "={{ $json.body.event==='message_created' &&$json.body.conversation.messages[0].sender_type ==='Contact' && $json.body.message_type=='incoming'}}",
+                            "rightValue": "={{ $json.body.event}}",
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "looseTypeValidation": "=",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                -208,
+                96
+            ],
+            "id": "b1052902-f928-44d3-a75e-b845fcd18b17",
+            "name": "If"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "3b1bc62a-26df-459c-8d44-a79751bfa84d",
+                            "name": "serverUrl",
+                            "value": "https://chatwoot.parallext.cloud/",
+                            "type": "string"
+                        },
+                        {
+                            "id": "4cec6634-587c-4e4c-a14c-c5c03eb49c5e",
+                            "name": "accountId",
+                            "value": "={{ $json.body.account.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "1ab184ce-bba8-429c-b21e-86a940eaea94",
+                            "name": "conversationId",
+                            "value": "={{ $json.body.conversation.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "c347a266-944b-4507-a94f-88d86c0d489b",
+                            "name": "mensajeId",
+                            "value": "={{ $json.body.id }}",
+                            "type": "number"
+                        },
+                        {
+                            "id": "fb241e82-f10f-49a2-b224-0eb4c3a37b4b",
+                            "name": "chatId",
+                            "value": "={{ $json.body.sender.phone_number }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "c80a8d04-1fe3-4d6a-9b8e-a4c0894ccaba",
+                            "name": "contenido",
+                            "value": "={{ $json.body.content }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "4b4b7810-138d-46f2-bc27-7457f9f585e3",
+                            "name": "usuario",
+                            "value": "={{ $json.body.sender.name }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                0,
+                0
+            ],
+            "id": "b0077e33-8348-4ed0-8648-fda55fbd4325",
+            "name": "Edit Fields"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $('Edit Fields').item.json.serverUrl }}//api/v1/accounts/{{ $('Edit Fields').item.json.accountId }}/conversations/{{ $('Edit Fields').item.json.conversationId }}/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n\"content\":{{JSON.stringify($json.output)}},\n\"private\":false,\n\"message_type\":\"outgoing\",\n\"sender\":\n{\n\"type\":\"bot\"\n}\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.4,
+            "position": [
+                624,
+                96
+            ],
+            "id": "7aedae65-5a2c-4988-827e-6cbc1378e843",
+            "name": "Respuesta a Bot",
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "3PxVhLgpwCVMSuEP",
+                    "name": "ChatwootBot_Parallext_Whatsapp"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -416,
+                96
+            ],
+            "id": "e8f551ee-d53b-43b8-81dc-ef4401c11e6f",
+            "name": "Webhook",
+            "webhookId": "1eff1133-3ba0-45cc-9ece-5f88d13c74d8"
+        }
+    ],
+    "connections": {
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Simple Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta a Bot",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If": {
+            "main": [
+                [
+                    {
+                        "node": "Edit Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Edit Fields": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "If",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "af0f7698-267c-400c-9a80-f5b93d458c36",
+    "activeVersionId": null,
+    "versionCounter": 10,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-02-17T05:17:58.777Z",
+            "createdAt": "2026-02-17T05:17:58.777Z",
+            "role": "workflow:owner",
+            "workflowId": "HmRVyvjVoDB84hi0isRKk",
+            "projectId": "kAoLQVwm2MCykCGW",
+            "project": {
+                "updatedAt": "2025-11-29T04:30:38.391Z",
+                "createdAt": "2025-11-29T04:29:39.150Z",
+                "id": "kAoLQVwm2MCykCGW",
+                "name": "Nir Levin Bermudez <nir.levin.us@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                "projectRelations": [
+                    {
+                        "updatedAt": "2025-11-29T04:29:39.150Z",
+                        "createdAt": "2025-11-29T04:29:39.150Z",
+                        "userId": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                        "projectId": "kAoLQVwm2MCykCGW",
+                        "user": {
+                            "updatedAt": "2026-02-19T05:00:17.696Z",
+                            "createdAt": "2025-11-29T04:29:38.778Z",
+                            "id": "6810c914-ff02-4fbe-a35f-44ee69745768",
+                            "email": "nir.levin.us@gmail.com",
+                            "firstName": "Nir Levin",
+                            "lastName": "Bermudez",
+                            "personalizationAnswers": {
+                                "version": "v4",
+                                "personalization_survey_submitted_at": "2025-11-29T04:31:10.684Z",
+                                "personalization_survey_n8n_version": "1.121.3",
+                                "automationGoalDevops": [
+                                    "cloud-infrastructure-orchestration",
+                                    "ci-cd"
+                                ],
+                                "companySize": "<20",
+                                "companyType": "saas",
+                                "role": "it",
+                                "reportedSource": "google"
+                            },
+                            "settings": {
+                                "userActivated": true,
+                                "firstSuccessfulWorkflowId": "ZsvE0wIg_V6l03H0J1fM_",
+                                "userActivatedAt": 1770709457724,
+                                "easyAIWorkflowOnboarded": true,
+                                "npsSurvey": {
+                                    "waitingForResponse": true,
+                                    "ignoredCount": 1,
+                                    "lastShownAt": 1771343202766
+                                }
+                            },
+                            "disabled": false,
+                            "mfaEnabled": false,
+                            "lastActiveAt": "2026-02-19",
+                            "isPending": false
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": null
+}

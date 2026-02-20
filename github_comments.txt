@@ -1,0 +1,118 @@
+--- Comment by luanstartflow ---
+@propiter Are you using coexistence? I'm experiencing the same issue, and it started at exactly the same time you mentioned.
+
+--- Comment by git100-br ---
+Estou enfrentando o mesmo problema. Não uso coexistência. Alguém mais?
+
+--- Comment by luanstartflow ---
+@git100-br o que acontece com o seu? as mensagens chegam atrasadas?
+
+--- Comment by websmark10 ---
+Tengo el mismo problema , mi automatización con en api de Whatsapp no contesta un promedio de 1 de cada 10 mensajes, chatwoot no registra el mensaje pero es porque no se lo envia Meta ,  por ende no se refleja ninguna ejecución en n8n , cuando vuelve uno a ingresar la opción y el bot ahora si contesta... varias horas despues que ya no requerimos esos mensajes es cuando  llegan , como si hubieran estado atorados en Meta. 
+
+Cabe mencionar que en los demas canales no se presenta esta situación , solo en para Whatsapp!!!
+
+![Image](https://github.com/user-attachments/assets/fefc90ba-f6f6-49b1-92c3-96d3da615744)
+![Image](https://github.com/user-attachments/assets/a01dd7b6-f9c2-4711-b782-e0f0c63ccd10)
+
+--- Comment by luanstartflow ---
+@websmark10 you are using Coexistence WhatsApp?
+
+--- Comment by websmark10 ---
+> [@websmark10](https://github.com/websmark10) you are using Coexistence WhatsApp?
+
+NO , Yo no utilizo coexistencia,   solo utilizo  el webhook de chatwoot que es el que pongo en la configuracion del api de whatsapp con el campo messages suscrito. 
+
+--- Comment by git100-br ---
+Boa tarde, sim o meu algumas mensagens chegavam muito atrasadas e outras no tempo certo. Graças a Deus 🙏 conseguiu resolver. Era problema de DNS algum servidor deve estar bugado. Liguei o proxy da cloudflare no domínio d webhook e funcionou perfeitamente. Mandei uma sequência de 20 mensagens e todas entraram perfeitamente. Graças a Deus.
+
+Uso VPS da Hostinger
+
+--- Comment by luanstartflow ---
+@git100-br obrigado, irei testar e volto para avisar.
+
+
+--- Comment by git100-br ---
+### **Título:** [Solução] Mensagens da WhatsApp Cloud API atrasadas por horas ou perdidas (Erro Cloudflare WAF 418/428)
+
+O Problema:
+Estávamos enfrentando problemas graves com os webhooks da WhatsApp Cloud API. As mensagens estavam chegando com horas de atraso.
+Inicialmente, suspeitamos das filas do Sidekiq do Chatwoot, latência do AWS S3, limites de requisição do Rack::Attack ou instabilidade global na API da Meta. O ambiente do servidor (VPS Hostinger) estava perfeito e as filas do Sidekiq estavam vazias.
+
+A Causa Raiz:
+O problema estava totalmente fora do código do Chatwoot. Foi um bloqueio silencioso pelo WAF (Web Application Firewall) do Cloudflare na porta de entrada do servidor.
+A proteção contra bots do Cloudflare estava identificando as requisições de webhook da Meta (e os robôs de leitura da Meta) como tráfego estrangeiro suspeito, bloqueando-os com erros HTTP 418 / 428.
+Como o Chatwoot nunca recebia a requisição para devolver o 200 OK, os servidores da Meta colocavam os webhooks na "Fila de Tentativas" (Exponential Backoff), fazendo com que as mensagens fossem entregues horas depois.
+
+A Solução:
+
+Acessamos o painel do Cloudflare.
+
+Ativamos o Proxy (Nuvem Laranja) para o domínio do Chatwoot/API.
+
+Ajustamos as regras de Segurança/WAF para permitir que os IPs e robôs da Meta passassem pela proteção.
+Resultado: Assim que o proxy e as regras foram ajustados, a fila da Meta destravou e todas as mensagens atrasadas inundaram a caixa de entrada do Chatwoot instantaneamente.
+
+Dica: Se você está com mensagens atrasadas, tente usar o Depurador de Compartilhamento da Meta (Facebook Developers) no seu link de webhook ou Política de Privacidade. Se retornar HTTP 418 ou 428, seu firewall/Cloudflare está bloqueando os webhooks!
+
+Graças a Deus. Todas as mensagens chegam na hora agora. 🙏🙏🙏
+
+--- Comment by luanstartflow ---
+@git100-br obrigado, acho que os próximos cliente vou ter que sair da hostinger, ja enfrentei um problema de mídia com eles, ultimamente começou a ter muitos problemas. 
+
+--- Comment by git100-br ---
+Ativa o Proxy da cloudflare. O firewall da Hostinger que bloqueou por segurança. Quando o DNS está pela cloudflare funcionou bem. Isso foi um problema recente. Eu não usava o Proxy e funcionava bem.
+
+--- Comment by lennon3d ---
+> ### **Título:** [Solução] Mensagens da API WhatsApp Cloud atrasadas por horas ou perdidas (Erro Cloudflare WAF 418/428)
+> O Problema: Estávamos enfrentando problemas graves com os webhooks da WhatsApp Cloud API. As mensagens estavam chegando com horas de atraso. Inicialmente, suspeitamos dos filas do Sidekiq do Chatwoot, latência do AWS S3, limites de requisição do Rack::Attack ou instabilidade global na API da Meta. O ambiente do servidor (VPS Hostinger) estava perfeito e as filas do Sidekiq estavam vazias.
+> 
+> A Causa Raiz: O problema estava totalmente fora do código do Chatwoot. Foi um bloqueio silencioso pelo WAF (Web Application Firewall) do Cloudflare na porta de entrada do servidor. A proteção contra bots do Cloudflare estava identificando as requisições de webhook da Meta (e os robôs de leitura da Meta) como tráfego estrangeiro suspeito, bloqueando-os com erros HTTP 418 / 428. Como o Chatwoot nunca recebeu a requisição para devolver o 200 OK, os servidores da Meta colocavam os webhooks na "Fila de Tentativas" (Exponential Backoff), fazendo com que as mensagens fossem entregues depois de horas.
+> 
+> A:
+> 
+> Acessamos o painel do Cloudflare.
+> 
+> Ativamos o Proxy (Nova Laranja) para o domínio do Chatwoot/API.
+> 
+> Ajustamos as regras de Segurança/WAF para permitir que os IPs e robôs da Meta passem pela proteção. Resultado: Assim que o proxy e as regras foram ajustadas, a fila da Meta destravou e todas as mensagens atrasadas inundaram a caixa de entrada do Chatwoot instantaneamente.
+> 
+> Dica: Se você está com mensagens atrasadas, tente usar o Depurador de Compartilhamento da Meta (Facebook Developers) no seu link de webhook ou Política de Privacidade. Se retornar HTTP 418 ou 428, seu firewall/Cloudflare está bloqueando os webhooks!
+> 
+> Graças a Deus. Todas as mensagens chegam na hora agora. 🙏🙏🙏
+
+Perfect, my friend, you solved my problem. Using Hostinger with EasyPanel, I noticed the same thing was happening and I was going crazy because we were receiving 1000 to 3000 messages, all of which were getting out of order or not being sent. It was madness. Putting all the webhook communication and access directly through Cloudflare solved the problem. Now we just hope it doesn't keep dropping, haha.
+
+--- Comment by joaogehlen91 ---
+> ### **Título:** [Solução] Mensagens da WhatsApp Cloud API atrasadas por horas ou perdidas (Erro Cloudflare WAF 418/428)
+> O Problema: Estávamos enfrentando problemas graves com os webhooks da WhatsApp Cloud API. As mensagens estavam chegando com horas de atraso. Inicialmente, suspeitamos das filas do Sidekiq do Chatwoot, latência do AWS S3, limites de requisição do Rack::Attack ou instabilidade global na API da Meta. O ambiente do servidor (VPS Hostinger) estava perfeito e as filas do Sidekiq estavam vazias.
+> 
+> A Causa Raiz: O problema estava totalmente fora do código do Chatwoot. Foi um bloqueio silencioso pelo WAF (Web Application Firewall) do Cloudflare na porta de entrada do servidor. A proteção contra bots do Cloudflare estava identificando as requisições de webhook da Meta (e os robôs de leitura da Meta) como tráfego estrangeiro suspeito, bloqueando-os com erros HTTP 418 / 428. Como o Chatwoot nunca recebia a requisição para devolver o 200 OK, os servidores da Meta colocavam os webhooks na "Fila de Tentativas" (Exponential Backoff), fazendo com que as mensagens fossem entregues horas depois.
+> 
+> A Solução:
+> 
+> Acessamos o painel do Cloudflare.
+> 
+> Ativamos o Proxy (Nuvem Laranja) para o domínio do Chatwoot/API.
+> 
+> Ajustamos as regras de Segurança/WAF para permitir que os IPs e robôs da Meta passassem pela proteção. Resultado: Assim que o proxy e as regras foram ajustados, a fila da Meta destravou e todas as mensagens atrasadas inundaram a caixa de entrada do Chatwoot instantaneamente.
+> 
+> Dica: Se você está com mensagens atrasadas, tente usar o Depurador de Compartilhamento da Meta (Facebook Developers) no seu link de webhook ou Política de Privacidade. Se retornar HTTP 418 ou 428, seu firewall/Cloudflare está bloqueando os webhooks!
+> 
+> Graças a Deus. Todas as mensagens chegam na hora agora. 🙏🙏🙏
+
+"Ajustamos as regras de Segurança/WAF para permitir que os IPs e robôs da Meta passassem pela proteção" Como exatamente fez isso?
+
+--- Comment by git100-br ---
+@joaogehlen91 Eu apenas ativei o proxy da cloudflare para o domínio do meu chatwoot. 
+
+Minha hospedagem estava bloqueando diversos webhook que a meta me enviava e aí tentava enviar mais tarde e com isso gerava atrasos de horas na entrega de diversas mensagens. Eu já usava a cloudflare para direcionar meu domínio para a hospedagem, mas usava apenas para DNS. Quando ativei a nuvem laranja o problema acabou.
+
+--- Comment by luanstartflow ---
+@git100-br você ativou somente a nuvem laranja nada a mais?
+
+--- Comment by sojan-official ---
+We’re seeing similar reports from other self-hosted deployments as well.
+
+To avoid fragmentation and track this properly, we’re consolidating all related findings and updates under this issue.
+

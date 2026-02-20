@@ -66,6 +66,11 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 
+# --- Chatwoot Config ---
+CHATWOOT_API_URL = os.environ.get("CHATWOOT_API_URL", "https://chatwoot.parallext.cloud")
+CHATWOOT_API_TOKEN = os.environ.get("CHATWOOT_API_TOKEN", "")
+CHATWOOT_ACCOUNT_ID = os.environ.get("CHATWOOT_ACCOUNT_ID", "1")
+
 @app.on_event("startup")
 async def startup():
     global db_pool
@@ -864,6 +869,90 @@ async def send_to_n8n(conversation_id: int):
     except Exception as e:
         print(f"Error sending to n8n: {e}")
 
+async def auto_register_contact(payload: dict):
+    """Auto-register contact in PostgreSQL from incoming webhook payload."""
+    global db_pool
+    if not db_pool:
+        return
+    try:
+        sender = payload.get("sender", {}) or payload.get("conversation", {}).get("meta", {}).get("sender", {})
+        phone = sender.get("phone_number", "").replace(" ", "").strip()
+        name = sender.get("name", "").strip()
+        if not phone:
+            return
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO conversaciones (telefono, nombre_contacto, fecha_ultimo_mensaje)
+                VALUES ($1, $2, CURRENT_TIMESTAMP)
+                ON CONFLICT (telefono) DO UPDATE
+                SET fecha_ultimo_mensaje = CURRENT_TIMESTAMP,
+                    nombre_contacto = COALESCE(NULLIF($2, ''), conversaciones.nombre_contacto)
+                """,
+                phone, name
+            )
+        print(f"Auto-registered contact: {phone} ({name})")
+    except Exception as e:
+        print(f"Error auto-registering contact: {e}")
+
+
+async def apply_chatwoot_label(conversation_id: int, labels: list):
+    """Apply labels to a Chatwoot conversation via their API."""
+    if not CHATWOOT_API_TOKEN:
+        print("Skipping label: No Chatwoot API token configured.")
+        return False
+    url = f"{CHATWOOT_API_URL}/api/v1/accounts/{CHATWOOT_ACCOUNT_ID}/conversations/{conversation_id}/labels"
+    headers = {
+        "Content-Type": "application/json",
+        "api_access_token": CHATWOOT_API_TOKEN
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(url, json={"labels": labels}, headers=headers)
+            print(f"Chatwoot label response ({conversation_id}): {resp.status_code} - {labels}")
+            return resp.status_code == 200
+    except Exception as e:
+        print(f"Error applying Chatwoot label: {e}")
+        return False
+
+
+async def auto_label_new_contact(conversation_id: int, payload: dict):
+    """Auto-label conversation as 'nuevo' or 'repetido' based on DB history."""
+    global db_pool
+    if not db_pool or not CHATWOOT_API_TOKEN:
+        return
+    try:
+        sender = payload.get("sender", {}) or payload.get("conversation", {}).get("meta", {}).get("sender", {})
+        phone = sender.get("phone_number", "").replace(" ", "").strip()
+        if not phone:
+            return
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT COUNT(*) as cnt FROM reservas WHERE fk_telefono = $1", phone
+            )
+            has_history = row and row["cnt"] > 0
+        label = "repetido" if has_history else "nuevo"
+        await apply_chatwoot_label(conversation_id, [label])
+    except Exception as e:
+        print(f"Error auto-labeling contact: {e}")
+
+
+class LabelRequest(BaseModel):
+    conversation_id: int
+    labels: List[str]
+
+@app.post("/conversations/label")
+async def label_conversation(
+    data: LabelRequest,
+    api_key: str = Security(verify_api_key),
+):
+    """Apply labels to a Chatwoot conversation. Called by n8n after agent processing."""
+    success = await apply_chatwoot_label(data.conversation_id, data.labels)
+    if not success:
+        raise HTTPException(status_code=502, detail="Failed to apply labels in Chatwoot")
+    return {"status": "success", "conversation_id": data.conversation_id, "labels": data.labels}
+
+
 @app.post("/webhook/chatwoot")
 async def chatwoot_webhook(request: Request):
     """
@@ -881,6 +970,9 @@ async def chatwoot_webhook(request: Request):
         asyncio.create_task(forward_immediately(payload))
         return {"status": "ok", "forwarded_async": True}
 
+    # Auto-register contact on every incoming message
+    asyncio.create_task(auto_register_contact(payload))
+
     conversation = payload.get("conversation", {})
     conversation_id = conversation.get("id")
     
@@ -891,24 +983,22 @@ async def chatwoot_webhook(request: Request):
         asyncio.create_task(forward_immediately(payload))
         return {"status": "ok", "forwarded_async": True}
 
+    # Auto-label as 'nuevo' if first time (fire and forget)
+    asyncio.create_task(auto_label_new_contact(conversation_id, payload))
+
     # Debounce logic
     global pending_webhooks
     
     if conversation_id in pending_webhooks:
-        # We already have a pending timer for this conversation.
-        # Cancel the existing timer, append the message, and start a new timer.
         pending_webhooks[conversation_id]["timer"].cancel()
         pending_webhooks[conversation_id]["messages"].append(content)
-        
-        # Start new timer
         new_task = asyncio.create_task(send_to_n8n(conversation_id))
         pending_webhooks[conversation_id]["timer"] = new_task
     else:
-        # First message for this conversation newly arriving
         new_task = asyncio.create_task(send_to_n8n(conversation_id))
         pending_webhooks[conversation_id] = {
             "timer": new_task,
-            "payload": payload,  # Base payload to use for forwarding
+            "payload": payload,
             "messages": [content]
         }
         
