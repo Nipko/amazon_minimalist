@@ -737,6 +737,46 @@
         12392
       ],
       "webhookId": "wait-fotos-webhook"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Usa esta herramienta para etiquetar la conversación en Chatwoot según la etapa del huésped. Etiquetas válidas: interesado (pregunta por fechas/precios), cotizando (se consultó disponibilidad), reservado (reserva confirmada), requiere-humano (queja, problema, pide hablar con persona). NO asignes las etiquetas 'nuevo' o 'repetido', esas son automáticas. Parámetros: conversation_id (número), label (texto de la etiqueta).",
+        "method": "POST",
+        "url": "https://availability-api.parallext.cloud/conversations/label",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"conversation_id\": {conversation_id}, \"labels\": [\"{label}\"]}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "conversation_id",
+              "description": "El ID numérico de la conversación actual de Chatwoot",
+              "type": "number"
+            },
+            {
+              "name": "label",
+              "description": "La etiqueta a aplicar: interesado, cotizando, reservado, o requiere-humano",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "fc8a1e2d-3b7c-4d9f-a1e5-6f8b2c4d7e9a",
+      "name": "Label_Conversation",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        30656,
+        12652
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Nu8trf1G0Zljoo9F",
+          "name": "Availability API Key"
+        }
+      }
     }
   ],
   "connections": {
@@ -857,6 +897,17 @@
       ]
     },
     "Confirm_Booking": {
+      "ai_tool": [
+        [
+          {
+            "node": "🤖 Sales Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label_Conversation": {
       "ai_tool": [
         [
           {
