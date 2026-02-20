@@ -60,6 +60,12 @@ DB_NAME = os.environ.get("DB_NAME", "postgres")
 # Global pool
 db_pool = None
 
+# --- SMTP Config ---
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+
 @app.on_event("startup")
 async def startup():
     global db_pool
@@ -101,6 +107,66 @@ def get_media_url(request: Request, apt_id: str, filename: str) -> str:
     """Build a full media URL for a photo/video."""
     base = str(request.base_url).rstrip("/")
     return f"{base}/media/{apt_id}/{filename}"
+
+def send_confirmation_email(booking, apt_name, apt_address):
+    """Sends a confirmation email to the guest using SMTP."""
+    if not SMTP_USER or not SMTP_PASSWORD or not booking.guest_email:
+        print("Skipping email: Missing SMTP credentials or guest email.")
+        return False
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    msg = MIMEMultipart()
+    msg['From'] = SMTP_USER
+    msg['To'] = booking.guest_email
+    msg['Subject'] = f"Confirmación de Reserva en {apt_name}"
+
+    html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <h2 style="color: #2c3e50;">¡Hola {booking.guest_name}!</h2>
+        <p>Tu reserva en <strong>{apt_name}</strong> ha sido confirmada con éxito. Nos hace muy felices recibirte en Leticia, Amazonas.</p>
+        
+        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalles de la Reserva:</h3>
+        <ul>
+          <li><strong>Lugar:</strong> {apt_name}</li>
+          <li><strong>Dirección:</strong> {apt_address}</li>
+          <li><strong>Check-in:</strong> {booking.check_in} (3:00 PM)</li>
+          <li><strong>Check-out:</strong> {booking.check_out} (11:00 AM)</li>
+          <li><strong>Huéspedes:</strong> {booking.num_guests} personas</li>
+          <li><strong>Precio Total:</strong> {booking.total_price} COP</li>
+        </ul>
+        
+        <p>{"<strong>Notas adicionales:</strong> " + booking.notes if booking.notes else ""}</p>
+        
+        <p>Por favor conserva este correo como copia de tu confirmación. Si tienes alguna duda, puedes respondernos a nuestro WhatsApp.</p>
+        <br>
+        <p>¡Te esperamos pronto!</p>
+        <p><strong>El equipo de Amazon Minimalist</strong></p>
+      </body>
+    </html>
+    """
+    
+    msg.attach(MIMEText(html, 'html'))
+
+    try:
+        # Use SMTP_SSL if port is 465, or starttls if port is 587
+        if SMTP_PORT == 465:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
+        else:
+            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server.starttls()
+            
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print(f"Confirmation email successfully sent to {booking.guest_email}")
+        return True
+    except Exception as e:
+        print(f"Failed to send email to {booking.guest_email}: {e}")
+        return False
 
 
 # --- Models ---
@@ -541,6 +607,11 @@ async def confirm_booking(
     # Build booking confirmation data
     apt_name = details.get(booking.apt, {}).get("name", booking.apt)
     apt_address = details.get(booking.apt, {}).get("location", {}).get("address", "")
+    
+    # Send confirmation email
+    email_sent = False
+    if booking.guest_email:
+        email_sent = send_confirmation_email(booking, apt_name, apt_address)
 
     confirmation = {
         "status": "confirmed",
@@ -560,7 +631,8 @@ async def confirm_booking(
             "total_price": booking.total_price,
             "currency": "COP",
             "notes": booking.notes,
-            "db_saved": db_success
+            "db_saved": db_success,
+            "email_sent": email_sent
         },
         "block_created": block_result.get("status") == "success",
         "emails_to_notify": [
@@ -568,7 +640,7 @@ async def confirm_booking(
             "sofia.henao96@gmail.com"
         ],
         "payment_methods": details.get(booking.apt, {}).get("payment_methods", {}),
-        "message": f"Reserva confirmada para {apt_name}. Fechas bloqueadas exitosamente."
+        "message": f"Reserva confirmada para {apt_name}. Fechas bloqueadas exitosamente. Correo enviado: {'Sí' if email_sent else 'No'}"
     }
 
     return confirmation
