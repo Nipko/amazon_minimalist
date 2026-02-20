@@ -41,8 +41,14 @@ En el servicio creado → pestaña **Environment**:
 | Variable | Valor |
 |---|---|
 | `API_KEY` | *(genera una clave segura)* |
+| `DB_HOST` | *(host de tu PostgreSQL, ej: postgres)* |
+| `DB_PORT` | `5432` *(por defecto)* |
+| `DB_NAME` | *(nombre de tu bd, ej: postgres)* |
+| `DB_USER` | *(tu usuario, ej: postgres)* |
+| `DB_PASSWORD` | *(tu clave de postgres)* |
+| `N8N_WEBHOOK_URL` | *(url de produccion de n8n para webhooks de chatwoot)* |
 
-Para generar una clave segura:
+Para generar una clave segura de API_KEY:
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
