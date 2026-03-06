@@ -322,10 +322,10 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         return
 
     # 2. IA Processing (Multi-Model)
-    if not os.environ.get("OPENAI_API_KEY") and "gpt" in LLM_MODEL:
-        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, "OPENAI_API_KEY no configurada.")
-        return
-
+    # The API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, etc) 
+    # are automatically picked up by LiteLLM. If missing, it will raise an Exception
+    # that is safely caught at the bottom, triggering the Error Contingency flow.
+    
     # Initialize memory if new
     if conversation_id not in chat_memory:
         chat_memory[conversation_id] = [
