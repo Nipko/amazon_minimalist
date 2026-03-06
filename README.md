@@ -55,8 +55,9 @@ El sistema corre en un solo bloque contenedor Docker servido en **Easypanel**.
 | `LLM_MODEL` | Modelo a inyectar en litellm (Default: `gpt-4o-mini`) |
 | `OPENAI_API_KEY` o `GROQ_API_KEY` | Llaves del proveedor de IA elegido |
 | `CHATWOOT_API_URL` | `https://chatwoot.parallext.cloud` |
-| `CHATWOOT_API_TOKEN` | Token para leer historiales y enviar mensajes en la bandeja |
-| `SMTP_USER` / `SMTP_PASSWORD` | Correo puente (ej. Gmail App Password) para mandar recibos de reserva al huésped |
+| `CHATWOOT_API_TOKEN` | Token de BOT (Agent Bot en Chatwoot) para responder |
+| `CHATWOOT_USER_TOKEN` | Token de USUARIO (Perfil de Admin en Chatwoot) para modificar el estado y etiquetas de la conversación |
+| `SMTP_USER` / `SMTP_PASSWORD` | Correo puente (ej. Gmail App Password) para mandar recibos |
 
 ---
 

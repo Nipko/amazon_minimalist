@@ -77,6 +77,7 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 # --- Chatwoot Config ---
 CHATWOOT_API_URL = os.environ.get("CHATWOOT_API_URL", "https://chatwoot.parallext.cloud")
 CHATWOOT_API_TOKEN = os.environ.get("CHATWOOT_API_TOKEN", "")
+CHATWOOT_USER_TOKEN = os.environ.get("CHATWOOT_USER_TOKEN", CHATWOOT_API_TOKEN)
 CHATWOOT_ACCOUNT_ID = os.environ.get("CHATWOOT_ACCOUNT_ID", "1")
 
 @app.on_event("startup")
@@ -1042,13 +1043,13 @@ async def auto_register_contact(payload: dict):
 
 async def apply_chatwoot_label(conversation_id: int, labels: list):
     """Apply labels to a Chatwoot conversation via their API."""
-    if not CHATWOOT_API_TOKEN:
-        print("Skipping label: No Chatwoot API token configured.")
+    if not CHATWOOT_USER_TOKEN:
+        print("Skipping label: No Chatwoot USER API token configured.")
         return False
     url = f"{CHATWOOT_API_URL}/api/v1/accounts/{CHATWOOT_ACCOUNT_ID}/conversations/{conversation_id}/labels"
     headers = {
         "Content-Type": "application/json",
-        "api_access_token": CHATWOOT_API_TOKEN
+        "api_access_token": CHATWOOT_USER_TOKEN
     }
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -1063,7 +1064,7 @@ async def apply_chatwoot_label(conversation_id: int, labels: list):
 async def auto_label_new_contact(conversation_id: int, payload: dict):
     """Auto-label conversation as 'nuevo' or 'repetido' based on DB history."""
     global db_pool
-    if not db_pool or not CHATWOOT_API_TOKEN:
+    if not db_pool or not CHATWOOT_USER_TOKEN:
         return
     try:
         # Check if conversation already has labels
