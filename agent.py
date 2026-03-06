@@ -260,6 +260,19 @@ def send_chatwoot_message(account_id: int, conversation_id: int, content: str):
     except Exception as e:
         logger.error(f"Failed to send Chatwoot message: {e}")
 
+def send_typing_indicator(account_id: int, conversation_id: int, status: str = "on"):
+    """Toggle typing status in Chatwoot (on/off)."""
+    if not CHATWOOT_API_TOKEN: return
+    
+    url = f"{CHATWOOT_API_URL}/api/v1/accounts/{account_id}/conversations/{conversation_id}/toggle_typing_status"
+    headers = {"api_access_token": CHATWOOT_API_TOKEN}
+    payload = {"typing_status": status}
+    try:
+        with httpx.Client() as client_http:
+            client_http.post(url, json=payload, headers=headers, timeout=2.0)
+    except Exception as e:
+        logger.warning(f"Failed to toggle typing status: {e}")
+
 def trigger_error_contingency(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, last_message: str, error_detail: str = "Error desconocido"):
     """Sends email to admin and fallback message to user."""
     logger.error(f"Triggering Error Contingency: {error_detail}")
@@ -331,6 +344,9 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         messages = [messages[0]] + messages[-20:]
         chat_memory[conversation_id] = messages
     
+    # Activar "escribiendo..."
+    send_typing_indicator(account_id, conversation_id, "on")
+    
     try:
         max_turns = 3
         turn_count = 0
@@ -392,6 +408,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                 turn_count += 1
             else:
                 # Normal Response
+                send_typing_indicator(account_id, conversation_id, "off")
                 final_text = getattr(response_message, 'content', '') or ''
                 if not final_text.strip():
                     raise Exception("Groq response text empty. (Tool loop ended without text)")
@@ -400,9 +417,11 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                 break
                 
         if turn_count >= max_turns:
+            send_typing_indicator(account_id, conversation_id, "off")
             raise Exception("Maximum tool call loops exceeded.")
             
     except Exception as e:
+        send_typing_indicator(account_id, conversation_id, "off")
         logger.error(f"Error during Groq LLM inference: {e}")
         # En caso de Limit Quota o error interno, se detona el Error Contingency
         trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
