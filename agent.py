@@ -12,7 +12,7 @@ import httpx
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from groq import Groq
+import litellm
 
 import avail_checker
 from api import load_details
@@ -21,13 +21,12 @@ from api import load_details
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Agent")
 
-# --- Configure Groq ---
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-if GROQ_API_KEY:
-    client = Groq(api_key=GROQ_API_KEY)
-else:
-    logger.warning("No Groq API key found in environment variables (GROQ_API_KEY).")
-    client = None
+# --- Configure LLM Router (LiteLLM) ---
+LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+
+# LiteLLM allows fallback and picks up standard env vars automatically:
+# OPENAI_API_KEY, GROQ_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, etc.
+logger.info(f"Using LLM Model Router: {LLM_MODEL}")
 
 # --- Caching for memory ---
 chat_memory = TTLCache(maxsize=1000, ttl=7200)
@@ -140,8 +139,8 @@ def label_conversation(conversation_id: int, labels: list) -> dict:
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-# GROQ OAI TOOLS
-GROQ_TOOLS = [
+# OPENAI-STYLE TOOLS (Agnostic format)
+LLM_TOOLS = [
     {
         "type": "function",
         "function": {
@@ -287,7 +286,7 @@ def trigger_error_contingency(account_id: int, conversation_id: int, sender_name
         msg['Subject'] = "⚠️ ALERTA: Intervención requerida en WhatsApp"
         body = f"""🚨 ¡Hola Equipo!
 
-El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistema Groq. Por favor atiendan este chat de inmediato.
+El agente IA (Sofía) no pudo generar una respuesta debido a un fallo inferencial del Motor LLM. Por favor atiendan este chat de inmediato.
 
 👤 Nombre: {sender_name}
 📱 Teléfono: {sender_phone}
@@ -309,7 +308,7 @@ El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistem
 
 # --- Main Agent Processing ---
 def process_message(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, message_content: str):
-    """Main workflow to process an incoming message natively with Groq."""
+    """Main workflow to process an incoming message natively with LLM Router."""
     logger.info(f"Processing message from {sender_name} - {sender_phone}: {message_content}")
     clean_msg = re.sub(r'[!¡¿?.,;:]', '', message_content).strip().lower()
     
@@ -322,9 +321,9 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         send_chatwoot_message(account_id, conversation_id, '¡Con gusto! Si necesitas algo más, aquí estoy 😊')
         return
 
-    # 2. IA Processing (Groq - Llama 3)
-    if not client:
-        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, "GROQ_API_KEY no configurada.")
+    # 2. IA Processing (Multi-Model)
+    if not os.environ.get("OPENAI_API_KEY") and "gpt" in LLM_MODEL:
+        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, "OPENAI_API_KEY no configurada.")
         return
 
     # Initialize memory if new
@@ -335,7 +334,6 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
 
     # Reference the conversation
     messages = chat_memory[conversation_id]
-    
     user_prompt = f"[Contact Name (if available): {sender_name}]\n[Contact Phone: {sender_phone}]\n[Message]: {message_content}"
     messages.append({"role": "user", "content": user_prompt})
     
@@ -352,16 +350,17 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         turn_count = 0
         
         while turn_count < max_turns:
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            response = litellm.completion(
+                model=LLM_MODEL,
                 messages=messages,
-                tools=GROQ_TOOLS,
+                tools=LLM_TOOLS,
                 tool_choice="auto",
                 max_tokens=600,
                 temperature=0.8
             )
             response_message = response.choices[0].message
-            messages.append(response_message)
+            # litellm returns its own Object classes, converting directly
+            messages.append(response_message.model_dump(exclude_unset=True))
             
             tool_calls = getattr(response_message, 'tool_calls', None)
             
@@ -381,7 +380,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                             except Exception:
                                 pass
                     
-                    logger.info(f"Groq tool call [{turn_count}]: {function_name} with args {function_args}")
+                    logger.info(f"LLM tool call [{turn_count}]: {function_name} with args {function_args}")
                     
                     # Execute mapped function
                     try:
@@ -411,7 +410,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                 send_typing_indicator(account_id, conversation_id, "off")
                 final_text = getattr(response_message, 'content', '') or ''
                 if not final_text.strip():
-                    raise Exception("Groq response text empty. (Tool loop ended without text)")
+                    raise Exception("LLM response text empty. (Tool loop ended without text)")
                     
                 send_chatwoot_message(account_id, conversation_id, final_text)
                 break
@@ -422,6 +421,6 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
             
     except Exception as e:
         send_typing_indicator(account_id, conversation_id, "off")
-        logger.error(f"Error during Groq LLM inference: {e}")
+        logger.error(f"Error during LLM Multi-Model inference: {e}")
         # En caso de Limit Quota o error interno, se detona el Error Contingency
         trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
