@@ -1,6 +1,6 @@
 # 🏠 Amazon Minimalist — Sistema de Reservas con IA
 
-Sistema automatizado de atención al cliente y reservas para apartamentos turísticos en Leticia, Amazonas (Colombia). Integra WhatsApp, Chatwoot, n8n, y un agente de ventas con IA (Gemini 2.0 Flash).
+Sistema automatizado de atención al cliente y reservas para apartamentos turísticos en Leticia, Amazonas (Colombia). Integra WhatsApp, Chatwoot y un Agente IA Nativo en Python (Llama 3 70B vía Groq).
 
 ---
 
@@ -10,7 +10,7 @@ Sistema automatizado de atención al cliente y reservas para apartamentos turís
 📱 WhatsApp
     │
     ▼
-🔗 Chatwoot (CRM) ──→ Webhook ──→ 🤖 n8n (AI Agent)
+🔗 Chatwoot (CRM) ──→ Webhook ──→ 🤖 agent.py (Llama 3 70B - Groq)
     │                                    │
     │                         ┌──────────┼──────────────┐
     │                         ▼          ▼              ▼
@@ -36,8 +36,8 @@ Sistema automatizado de atención al cliente y reservas para apartamentos turís
 | `block_dates.py` | Gestión de bloqueo manual de fechas |
 | `system_prompt.md` | Prompt del agente IA con instrucciones de ventas, etiquetado y escalamiento |
 | `db_schema.sql` | Esquema de las tablas PostgreSQL (`conversaciones`, `reservas`) |
-| `n8n_manager.py` | CLI para gestionar workflows de n8n programáticamente |
-| `🏠 Amazon Minimalist — Chatwoot Sales Agent.json` | Workflow de n8n listo para importar |
+| `agent.py` | Cerebro IA: Integración de LangChain/Herramientas llamando a Groq API |
+| `Reglas_Caracteristicas_Apartamentos.txt` | Info de los apartamentos, reglas y precios |
 | `Reglas_Caracteristicas_Apartamentos.txt` | Info de los apartamentos, reglas y precios |
 | `postman_collection.json` | Colección Postman para pruebas de la API |
 
@@ -51,7 +51,6 @@ Sistema automatizado de atención al cliente y reservas para apartamentos turís
 |---|---|---|
 | API (FastAPI) | `https://availability-api.parallext.cloud` | 8000 |
 | Chatwoot | `https://chatwoot.parallext.cloud` | — |
-| n8n | `https://n8n.parallext.cloud` | — |
 | PostgreSQL | Interno | 5432 |
 
 ### Variables de entorno (Easypanel → availability-api → Environment)
@@ -64,7 +63,7 @@ Sistema automatizado de atención al cliente y reservas para apartamentos turís
 | `DB_NAME` | Nombre de la base de datos | `postgres` |
 | `DB_USER` | Usuario de PostgreSQL | `postgres` |
 | `DB_PASSWORD` | Contraseña de PostgreSQL | *(tu contraseña)* |
-| `N8N_WEBHOOK_URL` | URL del webhook de n8n | `https://n8n.parallext.cloud/webhook/...` |
+| `GROQ_API_KEY` | Clave API de Groq para LLM de Llama 3 | `gsk_...` |
 | `CHATWOOT_API_URL` | URL base de Chatwoot | `https://chatwoot.parallext.cloud` |
 | `CHATWOOT_API_TOKEN` | Token de acceso de Chatwoot | `bsK6Rw2kppzuYVVN8tKrYPFz` |
 | `CHATWOOT_ACCOUNT_ID` | ID de la cuenta en Chatwoot | `1` |

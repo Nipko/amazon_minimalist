@@ -169,8 +169,8 @@ GROQ_TOOLS = [
                         "description": "Fecha de check-out YYYY-MM-DD"
                     },
                     "num_guests": {
-                        "type": "integer",
-                        "description": "Cantidad de personas"
+                        "type": "string",
+                        "description": "Cantidad de personas (debe ser string/texto)"
                     }
                 },
                 "required": ["question_type"]
@@ -205,12 +205,12 @@ GROQ_TOOLS = [
                     "apartment_id": {"type": "string"},
                     "check_in": {"type": "string", "description": "YYYY-MM-DD"},
                     "check_out": {"type": "string", "description": "YYYY-MM-DD"},
-                    "num_guests": {"type": "integer"},
+                    "num_guests": {"type": "string", "description": "Cantidad de personas como texto"},
                     "guest_name": {"type": "string"},
                     "guest_email": {"type": "string"},
                     "guest_phone": {"type": "string"},
                     "guest_id": {"type": "string"},
-                    "total_price": {"type": "integer"},
+                    "total_price": {"type": "string", "description": "Precio como texto"},
                     "notes": {"type": "string"}
                 },
                 "required": ["apartment_id", "check_in", "check_out", "num_guests", "guest_name", "total_price"]
@@ -225,7 +225,7 @@ GROQ_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "conversation_id": {"type": "integer"},
+                    "conversation_id": {"type": "string"},
                     "labels": {"type": "array", "items": {"type": "string"}}
                 },
                 "required": ["conversation_id", "labels"]
@@ -354,6 +354,14 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                     function_args = json.loads(tool_call.function.arguments)
                 except Exception:
                     function_args = {}
+                
+                # Convert string numbers to int to satisfy Python functions
+                for key in ['num_guests', 'total_price', 'conversation_id']:
+                    if key in function_args:
+                        try:
+                            function_args[key] = int(function_args[key])
+                        except Exception:
+                            pass
                 
                 logger.info(f"Groq tool call: {function_name} with args {function_args}")
                 
