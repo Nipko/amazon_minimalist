@@ -332,83 +332,75 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         chat_memory[conversation_id] = messages
     
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            tools=GROQ_TOOLS,
-            tool_choice="auto",
-            max_tokens=600
-        )
-        response_message = response.choices[0].message
+        max_turns = 3
+        turn_count = 0
         
-        # Guardar en historial el output real sin modificar
-        messages.append(response_message)
-        
-        tool_calls = getattr(response_message, 'tool_calls', None)
-        
-        # Si hubo llamados a herramientas
-        if tool_calls:
-            for tool_call in tool_calls:
-                function_name = tool_call.function.name
-                try:
-                    function_args = json.loads(tool_call.function.arguments)
-                except Exception:
-                    function_args = {}
-                
-                # Convert string numbers to int to satisfy Python functions
-                for key in ['num_guests', 'total_price', 'conversation_id']:
-                    if key in function_args:
-                        try:
-                            function_args[key] = int(function_args[key])
-                        except Exception:
-                            pass
-                
-                logger.info(f"Groq tool call: {function_name} with args {function_args}")
-                
-                # Execute mapped function
-                try:
-                    if function_name == "query_apartment":
-                        tool_result = query_apartment(**function_args)
-                    elif function_name == "include_photos":
-                        tool_result = include_photos(**function_args)
-                    elif function_name == "confirm_booking":
-                        tool_result = confirm_booking(**function_args)
-                    elif function_name == "label_conversation":
-                        tool_result = label_conversation(**function_args)
-                    else:
-                        tool_result = {"error": "Unknown function"}
-                except Exception as e:
-                    tool_result = {"error": str(e)}
-
-                messages.append({
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "name": function_name,
-                    "content": json.dumps(tool_result)
-                })
-            
-            # Segunda llamada al LLM con el resultado
-            second_response = client.chat.completions.create(
+        while turn_count < max_turns:
+            response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=messages,
                 tools=GROQ_TOOLS,
-                max_tokens=600
+                tool_choice="auto",
+                max_tokens=600,
+                temperature=0.8
             )
-            final_text = second_response.choices[0].message.content
-            messages.append({"role": "assistant", "content": final_text})
+            response_message = response.choices[0].message
+            messages.append(response_message)
             
-            # Validate output
-            if not final_text or not final_text.strip():
-                raise Exception("Groq second response text empty.")
+            tool_calls = getattr(response_message, 'tool_calls', None)
+            
+            if tool_calls:
+                for tool_call in tool_calls:
+                    function_name = tool_call.function.name
+                    try:
+                        function_args = json.loads(tool_call.function.arguments)
+                    except Exception:
+                        function_args = {}
+                    
+                    # Convert string numbers to int to satisfy Python functions
+                    for key in ['num_guests', 'total_price', 'conversation_id']:
+                        if key in function_args:
+                            try:
+                                function_args[key] = int(function_args[key])
+                            except Exception:
+                                pass
+                    
+                    logger.info(f"Groq tool call [{turn_count}]: {function_name} with args {function_args}")
+                    
+                    # Execute mapped function
+                    try:
+                        if function_name == "query_apartment":
+                            tool_result = query_apartment(**function_args)
+                        elif function_name == "include_photos":
+                            tool_result = include_photos(**function_args)
+                        elif function_name == "confirm_booking":
+                            tool_result = confirm_booking(**function_args)
+                        elif function_name == "label_conversation":
+                            tool_result = label_conversation(**function_args)
+                        else:
+                            tool_result = {"error": "Unknown function"}
+                    except Exception as e:
+                        tool_result = {"error": str(e)}
+
+                    messages.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": json.dumps(tool_result)
+                    })
                 
-            send_chatwoot_message(account_id, conversation_id, final_text)
-            
-        else:
-            # Respuesta normal sin herramientas
-            final_text = getattr(response_message, 'content', '') or ''
-            if not final_text.strip():
-                raise Exception("Groq first response text empty.")
-            send_chatwoot_message(account_id, conversation_id, final_text)
+                turn_count += 1
+            else:
+                # Normal Response
+                final_text = getattr(response_message, 'content', '') or ''
+                if not final_text.strip():
+                    raise Exception("Groq response text empty. (Tool loop ended without text)")
+                    
+                send_chatwoot_message(account_id, conversation_id, final_text)
+                break
+                
+        if turn_count >= max_turns:
+            raise Exception("Maximum tool call loops exceeded.")
             
     except Exception as e:
         logger.error(f"Error during Groq LLM inference: {e}")
