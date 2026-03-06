@@ -22,9 +22,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Agent")
 
 # --- Configure Gemini ---
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
+else:
+    logger.warning("No Gemini API key found in environment variables (GEMINI_API_KEY or GOOGLE_API_KEY).")
 
 # --- Caching for memory ---
 chat_memory = TTLCache(maxsize=1000, ttl=7200)
@@ -166,7 +168,7 @@ def send_chatwoot_message(account_id: int, conversation_id: int, content: str):
     except Exception as e:
         logger.error(f"Failed to send Chatwoot message: {e}")
 
-def trigger_error_contingency(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, last_message: str):
+def trigger_error_contingency(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, last_message: str, error_detail: str = "Error desconocido"):
     """Sends email to admin and fallback message to user."""
     logger.error("Triggering Error Contingency!")
     # Message to user
@@ -183,12 +185,15 @@ def trigger_error_contingency(account_id: int, conversation_id: int, sender_name
         msg['Subject'] = "⚠️ ALERTA: Intervención requerida en WhatsApp"
         body = f"""🚨 ¡Hola Equipo!
 
-El agente IA (Sofía) no pudo generar una respuesta debido a un error de servicio. Por favor atiendan este chat de inmediato.
+El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistema. Por favor atiendan este chat de inmediato.
 
 👤 Nombre: {sender_name}
 📱 Teléfono: {sender_phone}
 💬 Último Mensaje: {last_message}
-🔗 Link Chatwoot: {CHATWOOT_API_URL}/app/accounts/{account_id}/conversations/{conversation_id}"""
+🔗 Link Chatwoot: {CHATWOOT_API_URL}/app/accounts/{account_id}/conversations/{conversation_id}
+
+🛠️ DETALLE TÉCNICO DEL ERROR:
+{error_detail}"""
         msg.attach(MIMEText(body, 'plain'))
         
         server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) if SMTP_PORT == 465 else smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
@@ -227,7 +232,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
             chat_memory[conversation_id] = model.start_chat(history=[])
         except Exception as e:
             logger.error(f"Failed to init model: {e}")
-            trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content)
+            trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
             return
 
     chat_session = chat_memory[conversation_id]
@@ -247,4 +252,4 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
     except Exception as e:
         logger.error(f"Error during LLM inference: {e}")
         # En caso de Limit Quota o error interno, se detona el Error Trigger Nativo
-        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content)
+        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
