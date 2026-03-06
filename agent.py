@@ -263,10 +263,9 @@ LLM_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "conversation_id": {"type": "string"},
                     "labels": {"type": "array", "items": {"type": "string"}}
                 },
-                "required": ["conversation_id", "labels"]
+                "required": ["labels"]
             }
         }
     }
@@ -438,7 +437,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                         function_args = {}
                     
                     # Convert string numbers to int to satisfy Python functions
-                    for key in ['num_guests', 'total_price', 'conversation_id']:
+                    for key in ['num_guests', 'total_price']:
                         if key in function_args:
                             try:
                                 function_args[key] = int(function_args[key])
@@ -458,6 +457,7 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                         elif function_name == "confirm_booking":
                             tool_result = confirm_booking(**function_args)
                         elif function_name == "label_conversation":
+                            function_args['conversation_id'] = conversation_id
                             tool_result = label_conversation(**function_args)
                         else:
                             tool_result = {"error": "Unknown function"}

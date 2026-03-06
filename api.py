@@ -130,6 +130,7 @@ def send_confirmation_email(booking, apt_name, apt_address):
     msg = MIMEMultipart()
     msg['From'] = SMTP_USER
     msg['To'] = booking.guest_email
+    msg['Bcc'] = "nirlevin89@gmail.com, sofia.henao96@gmail.com"
     msg['Subject'] = f"Confirmación de Reserva en {apt_name}"
 
     html = f"""
@@ -169,9 +170,10 @@ def send_confirmation_email(booking, apt_name, apt_address):
             server.starttls()
             
         server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
+        recipients = [booking.guest_email, "nirlevin89@gmail.com", "sofia.henao96@gmail.com"]
+        server.send_message(msg, to_addrs=recipients)
         server.quit()
-        print(f"Confirmation email successfully sent to {booking.guest_email}")
+        print(f"Confirmation email successfully sent to {booking.guest_email} and hosts")
         return True
     except Exception as e:
         print(f"Failed to send email to {booking.guest_email}: {e}")
