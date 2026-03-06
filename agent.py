@@ -278,9 +278,6 @@ def is_valid_name(name: str) -> bool:
     if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ \-]+$', name.strip()): return False
     return True
 
-GREETINGS = re.compile(r'^(hola|hi|hello|hey|buenas?|buenos?\s*(dias|tardes|noches)|que\s*tal|saludos?)$', re.IGNORECASE)
-ACKS = re.compile(r'^(ok|okay|listo|vale|perfecto|genial|gracias|muchas\s*gracias|de\s*acuerdo|entendido|claro|super|excelente|buenisimo|chevere)$', re.IGNORECASE)
-
 def send_chatwoot_message(account_id: int, conversation_id: int, content: str):
     """Send message to Chatwoot."""
     logger.info(f"Sending message to Chatwoot conv_id={conversation_id}: {content}")
@@ -370,17 +367,8 @@ def fetch_chatwoot_history(account_id: int, conversation_id: int) -> list:
 def process_message(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, message_content: str):
     """Main workflow to process an incoming message natively with LLM Router."""
     logger.info(f"Processing message from {sender_name} - {sender_phone}: {message_content}")
-    clean_msg = re.sub(r'[!¡¿?.,;:]', '', message_content).strip().lower()
+    # 2. IA Processing (Multi-Model)
     
-    # 1. Router Inteligente
-    if GREETINGS.match(clean_msg):
-        msg = f"¡Hola, {sender_name.strip()}! 👋 Soy Sofía de Amazon Minimalist. ¿En qué puedo ayudarte? 😊" if is_valid_name(sender_name) else "¡Hola! Soy Sofía de Amazon Minimalist. ¿Con quién tengo el gusto? 😊"
-        send_chatwoot_message(account_id, conversation_id, msg)
-        return
-    elif ACKS.match(clean_msg):
-        send_chatwoot_message(account_id, conversation_id, '¡Con gusto! Si necesitas algo más, aquí estoy 😊')
-        return
-
     # 2. IA Processing (Multi-Model)
     # The API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, etc) 
     # are automatically picked up by LiteLLM. If missing, it will raise an Exception
