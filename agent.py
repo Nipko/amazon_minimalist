@@ -98,10 +98,48 @@ def query_apartment(
         response_data[apt] = apt_info
     return response_data
 
-def include_photos(apartment_id: str) -> dict:
+def include_photos(apartment_id: str, account_id: int = None, conversation_id: int = None) -> dict:
     """Send apartment photos to the user."""
     logger.info(f"Tool include_photos called: apt={apartment_id}")
-    return {"status": "Photos queued to be sent to the user", "apartment_id": apartment_id}
+    
+    if not account_id or not conversation_id or not CHATWOOT_API_TOKEN:
+        return {"status": "Photos queued", "apartment_id": apartment_id, "error": "Missing Chatwoot context"}
+
+    # Definir las fotos más representativas de cada uno
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    photos_map = {
+        "amazon_minimalist": [
+            "multimedia/Amazon_minimalist/Casa_frente.jpg",
+            "multimedia/Amazon_minimalist/Sala.jpg",
+            "multimedia/Amazon_minimalist/habitacion_cama.jpg",
+            "multimedia/Amazon_minimalist/balcon_mecedoras.jpg"
+        ],
+        "family_amazon_minimalist": [
+            "multimedia/Family_Amazon_minimalist/Fachada_family.jpeg",
+            "multimedia/Family_Amazon_minimalist/Familia_sala.jpg",
+            "multimedia/Family_Amazon_minimalist/Comedor.jpg",
+            "multimedia/Family_Amazon_minimalist/Mecedora_cuarto.jpg"
+        ]
+    }
+    
+    paths = photos_map.get(apartment_id, [])
+    url = f"{CHATWOOT_API_URL}/api/v1/accounts/{account_id}/conversations/{conversation_id}/messages"
+    headers = {"api_access_token": CHATWOOT_API_TOKEN}
+    data = {"message_type": "outgoing", "private": "false"}
+    
+    sent_count = 0
+    for rel_path in paths:
+        path = os.path.join(base_dir, rel_path)
+        if os.path.exists(path):
+            try:
+                with open(path, "rb") as f:
+                    files = {"attachments[]": (os.path.basename(path), f, "image/jpeg")}
+                    httpx.post(url, headers=headers, data=data, files=files, timeout=20.0)
+                    sent_count += 1
+            except Exception as e:
+                logger.error(f"Failed to send photo {path}: {e}")
+                
+    return {"status": f"Sent {sent_count} photos to the user", "apartment_id": apartment_id}
 
 def confirm_booking(
     apartment_id: str, check_in: str, check_out: str, num_guests: int,
@@ -387,6 +425,8 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                         if function_name == "query_apartment":
                             tool_result = query_apartment(**function_args)
                         elif function_name == "include_photos":
+                            function_args['account_id'] = account_id
+                            function_args['conversation_id'] = conversation_id
                             tool_result = include_photos(**function_args)
                         elif function_name == "confirm_booking":
                             tool_result = confirm_booking(**function_args)
