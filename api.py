@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Security, Query, Request
 from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import asyncio
@@ -46,6 +47,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for public access (used in emails)
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+app.mount("/multimedia", StaticFiles(directory=MEDIA_DIR), name="multimedia")
 
 # --- Webhook Proxy Config ---
 N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL", "https://n8n.parallext.cloud/webhook/1eff1133-3ba0-45cc-9ece-5f88d13c74d8")
@@ -117,8 +122,8 @@ def get_media_url(request: Request, apt_id: str, filename: str) -> str:
     base = str(request.base_url).rstrip("/")
     return f"{base}/media/{apt_id}/{filename}"
 
-def send_confirmation_email(booking, apt_name, apt_address):
-    """Sends a professional confirmation email to the guest and hosts using SMTP."""
+def send_confirmation_email(booking, apt_name, apt_address, base_url):
+    """Sends a professional V2 confirmation email to the guest and hosts using SMTP."""
     if not SMTP_USER or not SMTP_PASSWORD or not booking.guest_email:
         print("Skipping email: Missing SMTP credentials or guest email.")
         return False
@@ -126,13 +131,12 @@ def send_confirmation_email(booking, apt_name, apt_address):
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
-    from email.mime.image import MIMEImage
 
-    msg = MIMEMultipart("related")
+    msg = MIMEMultipart()
     msg['From'] = SMTP_USER
     msg['To'] = booking.guest_email
     msg['Bcc'] = "nirlevin89@gmail.com, sofia.henao96@gmail.com"
-    msg['Subject'] = f"Reserva Confirmada: {apt_name} 🌿"
+    msg['Subject'] = f"Tu Reserva Está Confirmada 🌿 - {apt_name}"
 
     # Clean phone number for WhatsApp link
     clean_phone = "".join(filter(str.isdigit, booking.guest_phone))
@@ -141,6 +145,16 @@ def send_confirmation_email(booking, apt_name, apt_address):
 
     wa_link = f"https://wa.me/{clean_phone}" if clean_phone else "#"
     host_wa_link = "https://wa.me/573208010737"
+    
+    # Static URLs
+    base_url = "https://availability-api.parallext.cloud"
+    logo_url = f"{base_url}/static/Logo.png"
+    
+    apt_id = booking.apt
+    if apt_id == "amazon_minimalist":
+        cover_image = f"{base_url}/multimedia/Amazon_minimalist/Casa_frente.jpg"
+    else:
+        cover_image = f"{base_url}/multimedia/Family_Amazon_minimalist/Casa_frente.jpg"
 
     html = f"""
     <!DOCTYPE html>
@@ -148,67 +162,102 @@ def send_confirmation_email(booking, apt_name, apt_address):
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0; background-color: #f9f9f9; }}
-            .container {{ max-width: 600px; margin: 20px auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }}
-            .header {{ text-align: center; margin-bottom: 25px; }}
-            .header img {{ max-width: 150px; height: auto; }}
-            .title {{ color: #2c3e50; font-size: 24px; text-align: center; margin-bottom: 5px; }}
-            .subtitle {{ color: #7f8c8d; text-align: center; margin-top: 0; font-size: 16px; margin-bottom: 30px; }}
-            .details-box {{ background-color: #f8f9fa; border-left: 4px solid #4CAF50; padding: 20px; border-radius: 4px; margin-bottom: 25px; }}
-            .details-box p {{ margin: 8px 0; }}
-            .label {{ font-weight: bold; color: #2c3e50; width: 120px; display: inline-block; }}
-            .btn-whatsapp {{ display: inline-block; background-color: #25D366; color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; margin-top: 15px; text-align: center; }}
-            .footer {{ margin-top: 40px; text-align: center; color: #95a5a6; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f6f8; }}
+            .container {{ max-width: 650px; margin: 30px auto; background: #ffffff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); overflow: hidden; }}
+            .header {{ background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 1px solid #eee; }}
+            .header img {{ max-width: 180px; height: auto; }}
+            .cover-img {{ width: 100%; height: 260px; object-fit: cover; display: block; }}
+            .content {{ padding: 35px; }}
+            .title {{ color: #2E7D32; font-size: 26px; text-align: center; margin-top: 0; margin-bottom: 10px; font-weight: 800; }}
+            .subtitle {{ color: #7f8c8d; text-align: center; font-size: 16px; margin-bottom: 35px; }}
+            
+            .card {{ background-color: #f9fafe; border-left: 5px solid #4CAF50; padding: 20px 25px; border-radius: 6px; margin-bottom: 30px; }}
+            .card h3 {{ margin-top: 0; color: #1abc9c; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #e1e8ed; padding-bottom: 10px; }}
+            .info-row {{ margin: 10px 0; display: flex; align-items: flex-start; }}
+            .label {{ font-weight: 700; color: #34495e; min-width: 140px; display: inline-block; }}
+            .value {{ color: #2c3e50; font-weight: 500; }}
+            
+            .total-box {{ background-color: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 20px; text-align: center; margin-top: 25px; }}
+            .total-title {{ color: #2E7D32; font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase; }}
+            .total-price {{ color: #1b5e20; font-size: 32px; font-weight: 900; margin: 0; }}
+            
+            .map-box {{ margin-top: 30px; text-align: center; padding: 20px; border: 1px dashed #bdc3c7; border-radius: 8px; }}
+            .map-box p {{ margin-top: 0; font-weight: bold; color: #34495e; }}
+            .btn-outline {{ display: inline-block; background-color: transparent; border: 2px solid #3498db; color: #3498db; text-decoration: none; padding: 10px 20px; border-radius: 25px; font-weight: bold; margin-top: 10px; transition: all 0.3s; }}
+            
+            .payment-box {{ margin-top: 30px; background-color: #fff9e6; border-left: 5px solid #f1c40f; padding: 20px 25px; border-radius: 6px; }}
+            .payment-box h3 {{ margin-top: 0; color: #d35400; font-size: 18px; border-bottom: 1px solid #fdebd0; padding-bottom: 10px; }}
+            .payment-method {{ margin-bottom: 15px; }}
+            .payment-method strong {{ color: #e67e22; }}
+            
+            .contact-section {{ text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee; }}
+            .btn-whatsapp {{ display: inline-block; background-color: #25D366; color: white; text-decoration: none; padding: 14px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(37,211,102,0.3); }}
+            .footer {{ background-color: #2c3e50; color: #bdc3c7; text-align: center; padding: 20px; font-size: 14px; margin-top: 40px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <img src="cid:logo_image" alt="Amazon Minimalist Logo">
+                <img src="{logo_url}" alt="Amazon Minimalist Logo">
             </div>
+            <img src="{cover_image}" alt="Fachada del Apartamento" class="cover-img">
             
-            <h1 class="title">¡Reserva Confirmada, {booking.guest_name}! 🎉</h1>
-            <p class="subtitle">Nos hace muy felices recibirte en Leticia, Amazonas.</p>
-            
-            <div class="details-box">
-                <p><span class="label">Alojamiento:</span> {apt_name}</p>
-                <p><span class="label">Dirección:</span> {apt_address}</p>
-                <p><span class="label">Check-in:</span> {booking.check_in} (3:00 PM)</p>
-                <p><span class="label">Check-out:</span> {booking.check_out} (11:00 AM)</p>
-                <p><span class="label">Huéspedes:</span> {booking.num_guests} personas</p>
-                <p><span class="label">Precio Total:</span> ${booking.total_price:,.0f} COP</p>
-            </div>
-            
-            <p>He dejado bloqueadas estas fechas en el calendario especialmente para ti. {"<strong>Notas adicionales:</strong> " + booking.notes if booking.notes else ""}</p>
-            
-            <p style="text-align: center;">¿Tienes alguna duda de tu viaje, rutas o el alojamiento?</p>
-            <div style="text-align: center;">
-                <a href="{host_wa_link}" class="btn-whatsapp">Escríbenos a WhatsApp</a>
+            <div class="content">
+                <h1 class="title">¡Tu reserva es oficial, {booking.guest_name}! 🎉</h1>
+                <p class="subtitle">Estamos preparando todo para recibirte en Leticia, Amazonas.</p>
+                
+                <div class="card">
+                    <h3>Detalles de la Estadía</h3>
+                    <div class="info-row"><span class="label">📍 Alojamiento:</span> <span class="value">{apt_name}</span></div>
+                    <div class="info-row"><span class="label">📅 Check-in:</span> <span class="value">{booking.check_in} (A partir de las 3:00 PM)</span></div>
+                    <div class="info-row"><span class="label">📅 Check-out:</span> <span class="value">{booking.check_out} (Hasta las 11:00 AM)</span></div>
+                    <div class="info-row"><span class="label">👥 Huéspedes:</span> <span class="value">{booking.num_guests} personas</span></div>
+                    <div class="info-row"><span class="label">📞 Teléfono:</span> <span class="value">{booking.guest_phone}</span></div>
+                    <div class="info-row" style="margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;"><span class="label">📝 Notas:</span> <span class="value" style="color:#e67e22;">{booking.notes if booking.notes else "Ninguna"}</span></div>
+                </div>
+
+                <div class="total-box">
+                    <p class="total-title">Balance Total a Pagar</p>
+                    <p class="total-price">${booking.total_price:,.0f} COP</p>
+                </div>
+                
+                <div class="payment-box">
+                    <h3>💳 Información de Pago</h3>
+                    <p>Puedes realizar el pago mediante efectivo, o transferencia a las siguientes cuentas:</p>
+                    <div class="payment-method">
+                        <strong>Nequi:</strong> 3208010737
+                    </div>
+                    <div class="payment-method">
+                        <strong>Bancolombia (Ahorros):</strong> 174-803785-98<br>
+                        Titular: Nir Levin Bermudez
+                    </div>
+                    <div class="payment-method">
+                        <strong>PayPal (USD):</strong> nirlevin89@gmail.com
+                    </div>
+                </div>
+                
+                <div class="map-box">
+                    <p>🗺️ ¿Cómo llegar al apartamento?</p>
+                    <span style="display:block; margin-bottom:10px; color:#7f8c8d;">Transversal 3a #14-111, Barrio San Jose/Simón Bolivar.</span>
+                    <a href="https://maps.app.goo.gl/B8QJWoVeSHf2kvSNA" class="btn-outline">Ver en Google Maps</a>
+                </div>
+                
+                <div class="contact-section">
+                    <p style="color: #34495e; font-weight: bold; margin-bottom: 20px;">¿Alguna duda sobre tu viaje o cómo conseguir transporte?</p>
+                    <a href="{host_wa_link}" class="btn-whatsapp">📲 Escríbeme a WhatsApp</a>
+                </div>
             </div>
             
             <div class="footer">
-                <p>Por favor conserva este correo como soporte de tu confirmación.</p>
-                <p><strong>El equipo de Amazon Minimalist</strong></p>
+                <p>Guarda este correo electrónico. Contiene los detalles vitales de tu estadía.</p>
+                <p>© Amazon Minimalist Leticia</p>
             </div>
         </div>
     </body>
     </html>
     """
     
-    msg_html = MIMEText(html, 'html')
-    msg.attach(msg_html)
-
-    # Attach Logo
-    logo_path = os.path.join(BASE_DIR, "Logo.png")
-    if os.path.exists(logo_path):
-        try:
-            with open(logo_path, "rb") as img:
-                logo_mime = MIMEImage(img.read())
-                logo_mime.add_header('Content-ID', '<logo_image>')
-                logo_mime.add_header('Content-Disposition', 'inline', filename='Logo.png')
-                msg.attach(logo_mime)
-        except Exception as e:
-            print(f"Warning: Could not attach Logo.png: {e}")
+    msg.attach(MIMEText(html, 'html'))
 
     try:
         if SMTP_PORT == 465:
@@ -221,10 +270,10 @@ def send_confirmation_email(booking, apt_name, apt_address):
         recipients = [booking.guest_email, "nirlevin89@gmail.com", "sofia.henao96@gmail.com"]
         server.send_message(msg, to_addrs=recipients)
         server.quit()
-        print(f"Professional confirmation email sent to {booking.guest_email} and hosts")
+        print(f"Elite confirmation email sent to {booking.guest_email} and hosts")
         return True
     except Exception as e:
-        print(f"Failed to send professional email to {booking.guest_email}: {e}")
+        print(f"Failed to send elite email to {booking.guest_email}: {e}")
         return False
 
 
@@ -706,7 +755,8 @@ async def confirm_booking(
     # Send confirmation email
     email_sent = False
     if booking.guest_email:
-        email_sent = send_confirmation_email(booking, apt_name, apt_address)
+        base_url_dynamic = str(request.base_url).rstrip("/")
+        email_sent = send_confirmation_email(booking, apt_name, apt_address, base_url_dynamic)
 
     confirmation = {
         "status": "confirmed",

@@ -419,9 +419,20 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
     user_prompt = f"[Contact Name (if available): {sender_name}]\n[Contact Phone: {sender_phone}]\n[Message]: {message_content}"
     messages.append({"role": "user", "content": user_prompt})
     
-    # Truncate memory to avoid context window explosion (keep system prompt + last 20 messages max)
+    # Truncate memory safely to avoid splitting 'tool' and 'tool_calls' pairs
     if len(messages) > 21:
-        messages = [messages[0]] + messages[-20:]
+        sys_msgs = [m for m in messages if m["role"] == "system"]
+        recent = messages[len(sys_msgs):]
+        
+        cut_idx = max(0, len(recent) - 20)
+        # Move forward until we find a clean cut point (user or plain assistant msg)
+        while cut_idx < len(recent):
+            if recent[cut_idx]["role"] == "tool" or recent[cut_idx].get("tool_calls"):
+                cut_idx += 1
+            else:
+                break
+                
+        messages = sys_msgs + recent[cut_idx:]
         chat_memory[conversation_id] = messages
     
     # Activar "escribiendo..."
