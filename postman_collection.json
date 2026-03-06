@@ -269,6 +269,40 @@
                     "raw": "{\n  \"apt\": \"amazon_minimalist\",\n  \"start\": \"2026-05-01\"\n}"
                 }
             }
+        },
+        {
+            "name": "Get iCal Sources",
+            "request": {
+                "method": "GET",
+                "url": "{{base_url}}/config/icals",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "{{api_key}}"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Add/Update iCal Source",
+            "request": {
+                "method": "POST",
+                "url": "{{base_url}}/config/icals",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "{{api_key}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"apartment_id\": \"amazon_minimalist\",\n  \"url\": \"https://ical.booking.com/v1/export?t=nuevo_enlace_booking\"\n}"
+                }
+            }
         }
     ]
 }

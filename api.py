@@ -36,11 +36,11 @@ MEDIA_DIR = os.path.join(BASE_DIR, "multimedia")
 # --- App ---
 app = FastAPI(
     title="Availability Checker API",
-    description="API para consultar disponibilidad de apartamentos desde calendarios ICS (Airbnb/Booking.com). Diseñada para integrarse con n8n y WhatsApp.",
+    description="API para consultar disponibilidad de apartamentos desde calendarios ICS. Diseñada para integrarse directo con WhatsApp.",
     version="2.0.0",
 )
 
-# CORS — allow n8n and other services to call the API
+# CORS — allow frontend and other services to call the API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,7 +53,6 @@ app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 app.mount("/multimedia", StaticFiles(directory=MEDIA_DIR), name="multimedia")
 
 # --- Webhook Proxy Config ---
-N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL", "https://n8n.parallext.cloud/webhook/1eff1133-3ba0-45cc-9ece-5f88d13c74d8")
 DEBOUNCE_WAIT_SECONDS = 4.0
 
 # Store pending messages by conversation_id: { conversation_id: {"timer": task, "payload": original_payload, "messages": [text1, text2]} }
@@ -148,7 +147,7 @@ def send_confirmation_email(booking, apt_name, apt_address, base_url):
     
     # Static URLs
     base_url = "https://availability-api.parallext.cloud"
-    logo_url = f"{base_url}/static/Logo.png"
+    logo_url = f"{base_url}/multimedia/Logo.png"
     
     apt_id = booking.apt
     if apt_id == "amazon_minimalist":
