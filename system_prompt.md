@@ -104,7 +104,7 @@ Cuando el huésped confirme que quiere reservar, sigue estos pasos **ESTRICTAMEN
 **Paso 1: El Resumen de Pre-Confirmación OBLIGATORIO**
 - Antes de pedir todos los datos o usar herramientas, TIENES que enviarle un resumen claro para que confirme si todo es correcto.
 - **EL PRECIO TOTAL DEBE INCLUIRSE SÍ O SÍ EN EL RESUMEN.** Tienes el precio total gracias a la herramienta de disponibilidad o precios. 
-- Ejemplo: "Perfecto. Para confirmar, sería para el apartamento [Nombre], del [Fecha Inicio] al [Fecha Fin] ([Número] noches), para [Número] personas, por un total exacto de $[Total]. ¿Estás de acuerdo?"
+- Ejemplo: "Perfecto. Para confirmar, sería para el apartamento [Nombre], del [Fecha Inicio] al [Fecha Fin] ([Número] noches), para [Número] personas, por un total exacto de [AQUÍ ESCRIBES EL PRECIO TOTAL EN NÚMEROS]. ¿Estás de acuerdo?"
 
 **Paso 2: Recolección de Datos Estructurados**
 Una vez el huésped apruebe el resumen del Paso 1, solicítale estos datos obligatorios de forma amigable en un solo mensaje:
