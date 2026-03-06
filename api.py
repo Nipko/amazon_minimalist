@@ -118,7 +118,7 @@ def get_media_url(request: Request, apt_id: str, filename: str) -> str:
     return f"{base}/media/{apt_id}/{filename}"
 
 def send_confirmation_email(booking, apt_name, apt_address):
-    """Sends a confirmation email to the guest using SMTP."""
+    """Sends a professional confirmation email to the guest and hosts using SMTP."""
     if not SMTP_USER or not SMTP_PASSWORD or not booking.guest_email:
         print("Skipping email: Missing SMTP credentials or guest email.")
         return False
@@ -126,43 +126,91 @@ def send_confirmation_email(booking, apt_name, apt_address):
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
+    from email.mime.image import MIMEImage
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("related")
     msg['From'] = SMTP_USER
     msg['To'] = booking.guest_email
     msg['Bcc'] = "nirlevin89@gmail.com, sofia.henao96@gmail.com"
-    msg['Subject'] = f"Confirmación de Reserva en {apt_name}"
+    msg['Subject'] = f"Reserva Confirmada: {apt_name} 🌿"
+
+    # Clean phone number for WhatsApp link
+    clean_phone = "".join(filter(str.isdigit, booking.guest_phone))
+    if clean_phone and not clean_phone.startswith("57") and len(clean_phone) == 10:
+        clean_phone = "57" + clean_phone # Assume Colombia if not provided
+
+    wa_link = f"https://wa.me/{clean_phone}" if clean_phone else "#"
+    host_wa_link = "https://wa.me/573208010737"
 
     html = f"""
+    <!DOCTYPE html>
     <html>
-      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h2 style="color: #2c3e50;">¡Hola {booking.guest_name}!</h2>
-        <p>Tu reserva en <strong>{apt_name}</strong> ha sido confirmada con éxito. Nos hace muy felices recibirte en Leticia, Amazonas.</p>
-        
-        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalles de la Reserva:</h3>
-        <ul>
-          <li><strong>Lugar:</strong> {apt_name}</li>
-          <li><strong>Dirección:</strong> {apt_address}</li>
-          <li><strong>Check-in:</strong> {booking.check_in} (3:00 PM)</li>
-          <li><strong>Check-out:</strong> {booking.check_out} (11:00 AM)</li>
-          <li><strong>Huéspedes:</strong> {booking.num_guests} personas</li>
-          <li><strong>Precio Total:</strong> {booking.total_price} COP</li>
-        </ul>
-        
-        <p>{"<strong>Notas adicionales:</strong> " + booking.notes if booking.notes else ""}</p>
-        
-        <p>Por favor conserva este correo como copia de tu confirmación. Si tienes alguna duda, puedes respondernos a nuestro WhatsApp.</p>
-        <br>
-        <p>¡Te esperamos pronto!</p>
-        <p><strong>El equipo de Amazon Minimalist</strong></p>
-      </body>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0; background-color: #f9f9f9; }}
+            .container {{ max-width: 600px; margin: 20px auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }}
+            .header {{ text-align: center; margin-bottom: 25px; }}
+            .header img {{ max-width: 150px; height: auto; }}
+            .title {{ color: #2c3e50; font-size: 24px; text-align: center; margin-bottom: 5px; }}
+            .subtitle {{ color: #7f8c8d; text-align: center; margin-top: 0; font-size: 16px; margin-bottom: 30px; }}
+            .details-box {{ background-color: #f8f9fa; border-left: 4px solid #4CAF50; padding: 20px; border-radius: 4px; margin-bottom: 25px; }}
+            .details-box p {{ margin: 8px 0; }}
+            .label {{ font-weight: bold; color: #2c3e50; width: 120px; display: inline-block; }}
+            .btn-whatsapp {{ display: inline-block; background-color: #25D366; color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; margin-top: 15px; text-align: center; }}
+            .footer {{ margin-top: 40px; text-align: center; color: #95a5a6; font-size: 14px; border-top: 1px solid #eee; padding-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="cid:logo_image" alt="Amazon Minimalist Logo">
+            </div>
+            
+            <h1 class="title">¡Reserva Confirmada, {booking.guest_name}! 🎉</h1>
+            <p class="subtitle">Nos hace muy felices recibirte en Leticia, Amazonas.</p>
+            
+            <div class="details-box">
+                <p><span class="label">Alojamiento:</span> {apt_name}</p>
+                <p><span class="label">Dirección:</span> {apt_address}</p>
+                <p><span class="label">Check-in:</span> {booking.check_in} (3:00 PM)</p>
+                <p><span class="label">Check-out:</span> {booking.check_out} (11:00 AM)</p>
+                <p><span class="label">Huéspedes:</span> {booking.num_guests} personas</p>
+                <p><span class="label">Precio Total:</span> ${booking.total_price:,.0f} COP</p>
+            </div>
+            
+            <p>He dejado bloqueadas estas fechas en el calendario especialmente para ti. {"<strong>Notas adicionales:</strong> " + booking.notes if booking.notes else ""}</p>
+            
+            <p style="text-align: center;">¿Tienes alguna duda de tu viaje, rutas o el alojamiento?</p>
+            <div style="text-align: center;">
+                <a href="{host_wa_link}" class="btn-whatsapp">Escríbenos a WhatsApp</a>
+            </div>
+            
+            <div class="footer">
+                <p>Por favor conserva este correo como soporte de tu confirmación.</p>
+                <p><strong>El equipo de Amazon Minimalist</strong></p>
+            </div>
+        </div>
+    </body>
     </html>
     """
     
-    msg.attach(MIMEText(html, 'html'))
+    msg_html = MIMEText(html, 'html')
+    msg.attach(msg_html)
+
+    # Attach Logo
+    logo_path = os.path.join(BASE_DIR, "Logo.png")
+    if os.path.exists(logo_path):
+        try:
+            with open(logo_path, "rb") as img:
+                logo_mime = MIMEImage(img.read())
+                logo_mime.add_header('Content-ID', '<logo_image>')
+                logo_mime.add_header('Content-Disposition', 'inline', filename='Logo.png')
+                msg.attach(logo_mime)
+        except Exception as e:
+            print(f"Warning: Could not attach Logo.png: {e}")
 
     try:
-        # Use SMTP_SSL if port is 465, or starttls if port is 587
         if SMTP_PORT == 465:
             server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT)
         else:
@@ -173,10 +221,10 @@ def send_confirmation_email(booking, apt_name, apt_address):
         recipients = [booking.guest_email, "nirlevin89@gmail.com", "sofia.henao96@gmail.com"]
         server.send_message(msg, to_addrs=recipients)
         server.quit()
-        print(f"Confirmation email successfully sent to {booking.guest_email} and hosts")
+        print(f"Professional confirmation email sent to {booking.guest_email} and hosts")
         return True
     except Exception as e:
-        print(f"Failed to send email to {booking.guest_email}: {e}")
+        print(f"Failed to send professional email to {booking.guest_email}: {e}")
         return False
 
 
@@ -190,6 +238,42 @@ class BlockRequest(BaseModel):
 class BlockDeleteRequest(BaseModel):
     apt: str
     start: str  # YYYY-MM-DD
+
+
+class IcalSourceRequest(BaseModel):
+    sources: List[str]
+
+@app.get("/config/icals")
+async def get_ical_config(api_key: str = Security(verify_api_key)):
+    """Obtiene la configuración actual de calendarios de apartments.json"""
+    config_path = os.path.join(DATA_DIR, 'apartments.json')
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"error": "Configuration file not found"}
+
+@app.post("/config/icals/{apt_id}")
+async def update_ical_config(apt_id: str, request: IcalSourceRequest, api_key: str = Security(verify_api_key)):
+    """Actualiza las URLs iCal (sources) para un apartamento específico"""
+    config_path = os.path.join(DATA_DIR, 'apartments.json')
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            
+        if apt_id not in config:
+            raise HTTPException(status_code=404, detail="Apartment ID not found")
+            
+        config[apt_id]['sources'] = request.sources
+        
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+            
+        return {"status": "success", "message": f"Updated sources for {apt_id}", "data": config[apt_id]}
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Configuration file not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class QueryRequest(BaseModel):

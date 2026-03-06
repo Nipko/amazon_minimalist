@@ -388,8 +388,38 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
     
     # Initialize memory if new
     if conversation_id not in chat_memory:
+        # Fetch REST Short history
         history = fetch_chatwoot_history(account_id, conversation_id)
+        
+        # Fetch Long-Term context from Postgres (via internal API)
+        long_term_prompt = ""
+        try:
+            url_context = f"http://localhost:8000/bookings/contact/{sender_phone}"
+            headers_ctx = {"X-API-Key": os.environ.get("API_KEY", "dev-key-change-me")}
+            with httpx.Client() as client_http:
+                resp_ctx = client_http.get(url_context, headers=headers_ctx, timeout=5.0)
+                if resp_ctx.status_code == 200:
+                    data_ctx = resp_ctx.json()
+                    contact_name = data_ctx.get("name", "")
+                    last_summary = data_ctx.get("last_summary", "")
+                    past_bookings = data_ctx.get("past_bookings", [])
+                    
+                    if contact_name or last_summary or past_bookings:
+                        long_term_prompt = "--- CONTEXTO HISTÓRICO DE ESTE CONTACTO (NO VISIBLE PARA ÉL) ---\n"
+                        if contact_name:
+                            long_term_prompt += f"Nombre recordado: {contact_name}\n"
+                        if last_summary:
+                            long_term_prompt += f"Resumen última vez que hablaron: {last_summary}\n"
+                        if past_bookings:
+                            long_term_prompt += f"Cantidad de reservas previas exitosas: {len(past_bookings)}\n"
+                        long_term_prompt += "------------------------------------------------------------\n"
+        except Exception as e:
+            logger.error(f"Failed to fetch long term context: {e}")
+
         base_msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
+        if long_term_prompt:
+            base_msgs.append({"role": "system", "content": long_term_prompt})
+            
         if history and history[-1]["role"] == "user":
             history = history[:-1] # Pop the last message to avoid duplication with our prompt below
         if history:
