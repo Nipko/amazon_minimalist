@@ -149,12 +149,13 @@ def confirm_booking(
     """Confirms a booking and blocks the dates."""
     logger.info(f"Tool confirm_booking called for {guest_name} at {apartment_id}")
     try:
-        url = "http://localhost:8000/confirm-booking"
+        url = "http://localhost:8000/bookings"
         payload = {
-            "apartment_id": apartment_id, "check_in": check_in, "check_out": check_out,
+            "apt": apartment_id, "check_in": check_in, "check_out": check_out,
             "num_guests": num_guests, "guest_name": guest_name, "guest_email": guest_email,
             "guest_phone": guest_phone, "guest_id": guest_id, "total_price": total_price,
-            "notes": notes, "source": "WhatsApp Bot"
+            "price_per_night": int(total_price / max(1, num_guests)) if total_price else 0, # Approximation if not passed specifically
+            "notes": notes
         }
         headers = {"X-API-Key": os.environ.get("API_KEY", "dev-key-change-me")}
         with httpx.Client() as client_http:
