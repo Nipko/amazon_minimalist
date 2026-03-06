@@ -689,6 +689,7 @@ class BookingRequest(BaseModel):
 
 @app.post("/bookings")
 async def confirm_booking(
+    request: Request,
     booking: BookingRequest,
     api_key: str = Security(verify_api_key),
 ):
