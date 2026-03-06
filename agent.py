@@ -7,12 +7,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from typing import List, Dict, Optional
-import google.generativeai as genai
 from cachetools import TTLCache
 import httpx
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from groq import Groq
 
 import avail_checker
 from api import load_details
@@ -21,12 +21,13 @@ from api import load_details
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Agent")
 
-# --- Configure Gemini ---
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# --- Configure Groq ---
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+if GROQ_API_KEY:
+    client = Groq(api_key=GROQ_API_KEY)
 else:
-    logger.warning("No Gemini API key found in environment variables (GEMINI_API_KEY or GOOGLE_API_KEY).")
+    logger.warning("No Groq API key found in environment variables (GROQ_API_KEY).")
+    client = None
 
 # --- Caching for memory ---
 chat_memory = TTLCache(maxsize=1000, ttl=7200)
@@ -46,7 +47,7 @@ try:
 except FileNotFoundError:
     SYSTEM_PROMPT = "Eres Sofía de Amazon Minimalist, una persona real."
 
-# --- Helper Functions (Tools for Gemini) ---
+# --- Helper Functions (Tools for Groq) ---
 def query_apartment(
     question_type: str = "all", 
     apartment_id: str = None, 
@@ -119,8 +120,8 @@ def confirm_booking(
             "notes": notes, "source": "WhatsApp Bot"
         }
         headers = {"X-API-Key": os.environ.get("API_KEY", "dev-key-change-me")}
-        with httpx.Client() as client:
-            resp = client.post(url, json=payload, headers=headers, timeout=10.0)
+        with httpx.Client() as client_http:
+            resp = client_http.post(url, json=payload, headers=headers, timeout=10.0)
             if resp.status_code == 200:
                 return {"success": True, "message": "Booking successful and dates blocked"}
             return {"success": False, "error": resp.text}
@@ -133,18 +134,109 @@ def label_conversation(conversation_id: int, labels: list) -> dict:
     try:
         url = "http://localhost:8000/conversations/label"
         headers = {"X-API-Key": os.environ.get("API_KEY", "dev-key-change-me")}
-        with httpx.Client() as client:
-            client.post(url, json={"conversation_id": conversation_id, "labels": labels}, headers=headers)
+        with httpx.Client() as client_http:
+            client_http.post(url, json={"conversation_id": conversation_id, "labels": labels}, headers=headers)
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-agent_tools = [query_apartment, include_photos, confirm_booking, label_conversation]
+# GROQ OAI TOOLS
+GROQ_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "query_apartment",
+            "description": "Consultar disponibilidad de apartamentos, precios, detalles, amenidades y reglas. Usa esta funcion si el usuario pregunta por fechas, precios o detalles.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question_type": {
+                        "type": "string",
+                        "enum": ["all", "availability", "details", "prices", "photos"],
+                        "description": "Que informacion se consulta"
+                    },
+                    "apartment_id": {
+                        "type": "string",
+                        "enum": ["amazon_minimalist", "family_amazon_minimalist"],
+                        "description": "ID del apartamento, omite si el usuario no especifico uno en particular"
+                    },
+                    "check_in": {
+                        "type": "string",
+                        "description": "Fecha de check-in YYYY-MM-DD"
+                    },
+                    "check_out": {
+                        "type": "string",
+                        "description": "Fecha de check-out YYYY-MM-DD"
+                    },
+                    "num_guests": {
+                        "type": "integer",
+                        "description": "Cantidad de personas"
+                    }
+                },
+                "required": ["question_type"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "include_photos",
+            "description": "Envia fotos del apartamento indicado SI Y SOLO SI el usuario pidio explicitamente ver fotos.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "apartment_id": {
+                        "type": "string",
+                        "enum": ["amazon_minimalist", "family_amazon_minimalist"]
+                    }
+                },
+                "required": ["apartment_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "confirm_booking",
+            "description": "Confirma la reserva SOLO despues de que el huesped acepto un resumen formal de precio y fechas, y te entrego sus datos, identificacion, nombres y el resto.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "apartment_id": {"type": "string"},
+                    "check_in": {"type": "string", "description": "YYYY-MM-DD"},
+                    "check_out": {"type": "string", "description": "YYYY-MM-DD"},
+                    "num_guests": {"type": "integer"},
+                    "guest_name": {"type": "string"},
+                    "guest_email": {"type": "string"},
+                    "guest_phone": {"type": "string"},
+                    "guest_id": {"type": "string"},
+                    "total_price": {"type": "integer"},
+                    "notes": {"type": "string"}
+                },
+                "required": ["apartment_id", "check_in", "check_out", "num_guests", "guest_name", "total_price"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "label_conversation",
+            "description": "Etiqueta el chatwoot segun la intencion: 'interesado', 'cotizando', 'reservado', 'requiere-humano'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "conversation_id": {"type": "integer"},
+                    "labels": {"type": "array", "items": {"type": "string"}}
+                },
+                "required": ["conversation_id", "labels"]
+            }
+        }
+    }
+]
 
 # --- Router & Error Fallback Logic ---
 def is_valid_name(name: str) -> bool:
     if not name or not name.strip(): return False
-    # No solo numeros, y solo letras/espacios
     if re.match(r'^\+?\d+$', name.strip()): return False
     if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ \-]+$', name.strip()): return False
     return True
@@ -163,20 +255,17 @@ def send_chatwoot_message(account_id: int, conversation_id: int, content: str):
     headers = {"api_access_token": CHATWOOT_API_TOKEN}
     payload = {"content": content, "message_type": "outgoing", "private": False}
     try:
-        with httpx.Client() as client:
-            client.post(url, json=payload, headers=headers, timeout=5.0)
+        with httpx.Client() as client_http:
+            client_http.post(url, json=payload, headers=headers, timeout=5.0)
     except Exception as e:
         logger.error(f"Failed to send Chatwoot message: {e}")
 
 def trigger_error_contingency(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, last_message: str, error_detail: str = "Error desconocido"):
     """Sends email to admin and fallback message to user."""
-    logger.error("Triggering Error Contingency!")
-    # Message to user
+    logger.error(f"Triggering Error Contingency: {error_detail}")
     send_chatwoot_message(account_id, conversation_id, "Disculpa, regálame un momento por favor y ya te confirmo el dato.")
-    # Label to human
     label_conversation(conversation_id, ["requiere-humano"])
     
-    # Email alerting
     if not SMTP_USER or not SMTP_PASSWORD: return
     try:
         msg = MIMEMultipart()
@@ -185,7 +274,7 @@ def trigger_error_contingency(account_id: int, conversation_id: int, sender_name
         msg['Subject'] = "⚠️ ALERTA: Intervención requerida en WhatsApp"
         body = f"""🚨 ¡Hola Equipo!
 
-El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistema. Por favor atiendan este chat de inmediato.
+El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistema Groq. Por favor atiendan este chat de inmediato.
 
 👤 Nombre: {sender_name}
 📱 Teléfono: {sender_phone}
@@ -207,7 +296,7 @@ El agente IA (Sofía) no pudo generar una respuesta debido a un error del sistem
 
 # --- Main Agent Processing ---
 def process_message(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, message_content: str):
-    """Main workflow to process an incoming message natively."""
+    """Main workflow to process an incoming message natively with Groq."""
     logger.info(f"Processing message from {sender_name} - {sender_phone}: {message_content}")
     clean_msg = re.sub(r'[!¡¿?.,;:]', '', message_content).strip().lower()
     
@@ -220,36 +309,100 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
         send_chatwoot_message(account_id, conversation_id, '¡Con gusto! Si necesitas algo más, aquí estoy 😊')
         return
 
-    # 2. IA Processing
-    # Ensure memory
-    if conversation_id not in chat_memory:
-        try:
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash", 
-                system_instruction=SYSTEM_PROMPT,
-                tools=agent_tools
-            )
-            chat_memory[conversation_id] = model.start_chat(history=[])
-        except Exception as e:
-            logger.error(f"Failed to init model: {e}")
-            trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
-            return
+    # 2. IA Processing (Groq - Llama 3)
+    if not client:
+        trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, "GROQ_API_KEY no configurada.")
+        return
 
-    chat_session = chat_memory[conversation_id]
+    # Initialize memory if new
+    if conversation_id not in chat_memory:
+        chat_memory[conversation_id] = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ]
+
+    # Reference the conversation
+    messages = chat_memory[conversation_id]
     
-    # Prepare User Prompt Context
     user_prompt = f"[Contact Name (if available): {sender_name}]\n[Contact Phone: {sender_phone}]\n[Message]: {message_content}"
+    messages.append({"role": "user", "content": user_prompt})
+    
+    # Truncate memory to avoid context window explosion (keep system prompt + last 20 messages max)
+    if len(messages) > 21:
+        messages = [messages[0]] + messages[-20:]
+        chat_memory[conversation_id] = messages
     
     try:
-        response = chat_session.send_message(user_prompt)
-        text_response = response.text
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            tools=GROQ_TOOLS,
+            tool_choice="auto",
+            max_tokens=600
+        )
+        response_message = response.choices[0].message
         
-        if not text_response or text_response.strip() == "":
-            raise Exception("LLM returned empty text.")
+        # Guardar en historial el output real sin modificar
+        messages.append(response_message)
+        
+        tool_calls = getattr(response_message, 'tool_calls', None)
+        
+        # Si hubo llamados a herramientas
+        if tool_calls:
+            for tool_call in tool_calls:
+                function_name = tool_call.function.name
+                try:
+                    function_args = json.loads(tool_call.function.arguments)
+                except Exception:
+                    function_args = {}
+                
+                logger.info(f"Groq tool call: {function_name} with args {function_args}")
+                
+                # Execute mapped function
+                try:
+                    if function_name == "query_apartment":
+                        tool_result = query_apartment(**function_args)
+                    elif function_name == "include_photos":
+                        tool_result = include_photos(**function_args)
+                    elif function_name == "confirm_booking":
+                        tool_result = confirm_booking(**function_args)
+                    elif function_name == "label_conversation":
+                        tool_result = label_conversation(**function_args)
+                    else:
+                        tool_result = {"error": "Unknown function"}
+                except Exception as e:
+                    tool_result = {"error": str(e)}
+
+                messages.append({
+                    "tool_call_id": tool_call.id,
+                    "role": "tool",
+                    "name": function_name,
+                    "content": json.dumps(tool_result)
+                })
             
-        send_chatwoot_message(account_id, conversation_id, text_response)
-        
+            # Segunda llamada al LLM con el resultado
+            second_response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                tools=GROQ_TOOLS,
+                max_tokens=600
+            )
+            final_text = second_response.choices[0].message.content
+            messages.append({"role": "assistant", "content": final_text})
+            
+            # Validate output
+            if not final_text or not final_text.strip():
+                raise Exception("Groq second response text empty.")
+                
+            send_chatwoot_message(account_id, conversation_id, final_text)
+            
+        else:
+            # Respuesta normal sin herramientas
+            final_text = getattr(response_message, 'content', '') or ''
+            if not final_text.strip():
+                raise Exception("Groq first response text empty.")
+            send_chatwoot_message(account_id, conversation_id, final_text)
+            
     except Exception as e:
-        logger.error(f"Error during LLM inference: {e}")
-        # En caso de Limit Quota o error interno, se detona el Error Trigger Nativo
+        logger.error(f"Error during Groq LLM inference: {e}")
+        # En caso de Limit Quota o error interno, se detona el Error Contingency
         trigger_error_contingency(account_id, conversation_id, sender_name, sender_phone, message_content, str(e))
