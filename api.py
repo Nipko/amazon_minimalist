@@ -930,7 +930,19 @@ async def auto_label_new_contact(conversation_id: int, payload: dict):
     if not db_pool or not CHATWOOT_API_TOKEN:
         return
     try:
-        sender = payload.get("sender", {}) or payload.get("conversation", {}).get("meta", {}).get("sender", {})
+        # Check if conversation already has labels
+        conv = payload.get("conversation", {})
+        existing_labels = conv.get("labels", [])
+        if existing_labels and (
+            "nuevo" in existing_labels or 
+            "repetido" in existing_labels or 
+            "interesado" in existing_labels or 
+            "cotizando" in existing_labels or 
+            "reservado" in existing_labels
+        ):
+            return  # Already labeled for this session
+        
+        sender = payload.get("sender", {}) or conv.get("meta", {}).get("sender", {})
         phone = sender.get("phone_number", "").replace(" ", "").strip()
         if not phone:
             return

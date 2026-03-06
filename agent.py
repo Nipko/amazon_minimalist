@@ -115,10 +115,10 @@ def include_photos(apartment_id: str, account_id: int = None, conversation_id: i
             "multimedia/Amazon_minimalist/balcon_mecedoras.jpg"
         ],
         "family_amazon_minimalist": [
-            "multimedia/Family_Amazon_minimalist/Fachada_family.jpeg",
-            "multimedia/Family_Amazon_minimalist/Familia_sala.jpg",
-            "multimedia/Family_Amazon_minimalist/Comedor.jpg",
-            "multimedia/Family_Amazon_minimalist/Mecedora_cuarto.jpg"
+            "multimedia/Family_Amazon_minimalist/Casa_frente.jpg",
+            "multimedia/Family_Amazon_minimalist/Sala_principal.jpg",
+            "multimedia/Family_Amazon_minimalist/Habitacion_1_camas.jpg",
+            "multimedia/Family_Amazon_minimalist/balcon_mecedoras.jpg"
         ]
     }
     
@@ -344,6 +344,28 @@ El agente IA (Sofía) no pudo generar una respuesta debido a un fallo inferencia
     except Exception as e:
         logger.error(f"Failed to send alert email: {e}")
 
+def fetch_chatwoot_history(account_id: int, conversation_id: int) -> list:
+    """Fetch last 20 messages from Chatwoot to reconstruct short-term memory."""
+    if not CHATWOOT_API_TOKEN:
+        return []
+    url = f"{CHATWOOT_API_URL}/api/v1/accounts/{account_id}/conversations/{conversation_id}/messages"
+    headers = {"api_access_token": CHATWOOT_API_TOKEN}
+    try:
+        with httpx.Client() as client_http:
+            resp = client_http.get(url, headers=headers, timeout=5.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                payload = data.get("payload", [])
+                history = []
+                for m in reversed(payload[:15]):
+                    if m.get("message_type") in (0, 1) and m.get("content"):
+                        role = "user" if m["message_type"] == 0 else "assistant"
+                        history.append({"role": role, "content": m["content"]})
+                return history
+    except Exception as e:
+        logger.error(f"Failed to fetch history: {e}")
+    return []
+
 # --- Main Agent Processing ---
 def process_message(account_id: int, conversation_id: int, sender_name: str, sender_phone: str, message_content: str):
     """Main workflow to process an incoming message natively with LLM Router."""
@@ -366,9 +388,13 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
     
     # Initialize memory if new
     if conversation_id not in chat_memory:
-        chat_memory[conversation_id] = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        history = fetch_chatwoot_history(account_id, conversation_id)
+        base_msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
+        if history and history[-1]["role"] == "user":
+            history = history[:-1] # Pop the last message to avoid duplication with our prompt below
+        if history:
+            base_msgs.extend(history)
+        chat_memory[conversation_id] = base_msgs
 
     # Reference the conversation
     messages = chat_memory[conversation_id]
