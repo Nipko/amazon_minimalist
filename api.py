@@ -6,6 +6,10 @@ Deploy with: uvicorn api:app --host 0.0.0.0 --port 8000
 import os
 import json
 import mimetypes
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Security, Query, Request
 from fastapi.security import APIKeyHeader
 from fastapi.responses import JSONResponse, FileResponse
@@ -836,8 +840,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # --- Webhook Debounce Proxy ---
 
-async def send_to_n8n(conversation_id: int):
-    """Wait for debounce period, consolidate messages, and send to n8n."""
+async def send_to_agent(conversation_id: int):
+    """Wait for debounce period, consolidate messages, and send to Agent."""
     await asyncio.sleep(DEBOUNCE_WAIT_SECONDS)
     
     # After sleep, execute the webhook
@@ -851,23 +855,27 @@ async def send_to_n8n(conversation_id: int):
     # Consolidate messages by joining them with newlines
     consolidated_text = "\n".join(messages)
     
-    # Overwrite the payload content with the consolidated text
+    account_id = payload.get("account", {}).get("id", 1)
+    sender = payload.get("sender", {}) or payload.get("conversation", {}).get("meta", {}).get("sender", {})
+    sender_name = sender.get("name", "Usuario")
+    sender_phone = sender.get("phone_number", "")
+    
+    print(f"Forwarding {len(messages)} messages to native Agent for conv {conversation_id}:\n{consolidated_text}")
+    
     try:
-        payload["content"] = consolidated_text
-        if "conversation" in payload and "messages" in payload["conversation"] and len(payload["conversation"]["messages"]) > 0:
-            payload["conversation"]["messages"][0]["content"] = consolidated_text
-            payload["conversation"]["messages"][0]["processed_message_content"] = consolidated_text
+        import agent
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(
+            None, 
+            agent.process_message, 
+            account_id, 
+            conversation_id, 
+            sender_name, 
+            sender_phone, 
+            consolidated_text
+        )
     except Exception as e:
-        print(f"Error consolidating payload: {e}")
-
-    # Forward to n8n
-    print(f"Forwarding {len(messages)} messages to n8n for conversation {conversation_id}:\n{consolidated_text}")
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(N8N_WEBHOOK_URL, json=payload)
-            print(f"n8n response: {resp.status_code}")
-    except Exception as e:
-        print(f"Error sending to n8n: {e}")
+        print(f"Error sending to Agent: {e}")
 
 async def auto_register_contact(payload: dict):
     """Auto-register contact in PostgreSQL from incoming webhook payload."""
@@ -992,10 +1000,10 @@ async def chatwoot_webhook(request: Request):
     if conversation_id in pending_webhooks:
         pending_webhooks[conversation_id]["timer"].cancel()
         pending_webhooks[conversation_id]["messages"].append(content)
-        new_task = asyncio.create_task(send_to_n8n(conversation_id))
+        new_task = asyncio.create_task(send_to_agent(conversation_id))
         pending_webhooks[conversation_id]["timer"] = new_task
     else:
-        new_task = asyncio.create_task(send_to_n8n(conversation_id))
+        new_task = asyncio.create_task(send_to_agent(conversation_id))
         pending_webhooks[conversation_id] = {
             "timer": new_task,
             "payload": payload,
@@ -1006,9 +1014,5 @@ async def chatwoot_webhook(request: Request):
 
 
 async def forward_immediately(payload: dict):
-    """Forward a non-debounced webhook immediately to n8n."""
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            await client.post(N8N_WEBHOOK_URL, json=payload)
-    except Exception as e:
-        print(f"Error forwarding unhandled webhook to n8n: {e}")
+    """Ignored. Native agent does not need to handle non-text immediate forwards yet."""
+    pass
