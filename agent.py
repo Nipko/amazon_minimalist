@@ -428,6 +428,13 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
             logger.error(f"Failed to fetch long term context: {e}")
 
         base_msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
+        
+        # --- INJECT CURRENT DATE & TIME ---
+        from datetime import datetime
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        time_prompt = f"--- RELOJ DEL SISTEMA ---\nLa fecha y hora actual es: {now_str}. SIEMPRE asume que cualquier mes o día solicitado ({now_str[:4]}) corresponde a fechas iguales o futuras respecto al reloj actual. NUNCA asumas años pasados.\n-------------------------\n"
+        base_msgs.append({"role": "system", "content": time_prompt})
+        
         if long_term_prompt:
             base_msgs.append({"role": "system", "content": long_term_prompt})
             
