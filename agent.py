@@ -91,8 +91,11 @@ def query_apartment(
             if check_in and check_out:
                 res = avail_checker.check_apartment_availability(apt, check_in, check_out, config)
                 apt_info["availability_status"] = "Available" if res.get("available") else "Not Available"
-                if res.get("error"):
-                    apt_info["availability_error"] = res["error"]
+                error_msg = res.get("error", res.get("reason"))
+                if error_msg and "Error fetching" in error_msg:
+                    apt_info["availability_error"] = error_msg
+                elif res.get("error"):
+                    apt_info["availability_error"] = res.get("error")
                 if res.get("available") and num_guests and apt_info.get("price_per_night"):
                     from datetime import datetime
                     try:
