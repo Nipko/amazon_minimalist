@@ -81,3 +81,33 @@ En Chatwoot → **Settings → Integrations → Webhooks**:
 - Eventos: `message_created`
 
 ¡Y listo! Ya la inteligencia artificial embebida procesará el tráfico en tiempo real, evaluando si debe aplicar fotos (`/multimedia/`), verificar calendarios o cobrar. Funciona cruzado con Meta Cloud API gracias a la proxy de Chatwoot.
+
+---
+
+## 📅 Sincronización de Calendarios (iCal)
+
+Este sistema funciona como un "Channel Manager" centralizado.
+
+### 1. Exportar desde el API hacia Airbnb / Booking
+Para que plataformas como Booking o Airbnb se enteren de que hay una reserva aprobada por la IA a través de WhatsApp (o fechas bloqueadas manualmente), debes copiar los siguientes vínculos e introducirlos en dichas plataformas:
+
+- **Amazon Minimalist**: `https://availability-api.parallext.cloud/public/amazon_minimalist_blocks.ics`
+- **Family Amazon**: `https://availability-api.parallext.cloud/public/family_amazon_minimalist_blocks.ics`
+
+### 2. Importar desde Airbnb / Booking hacia el API
+Para que la IA de WhatsApp sepa que en Airbnb hicieron una reserva y no ofrezca esas fechas sobre-vendiendo el apartamento, debes darle a conocer a la API tus enlaces iCal externos. Usa cualquier cliente REST (ej. Postman) y haz lo siguiente:
+
+**Método:** `POST`
+**Ruta:** `https://availability-api.parallext.cloud/config/icals/{ID_DEL_APARTAMENTO}`
+(Ejemplo de ID: `amazon_minimalist` o `family_amazon_minimalist`)
+
+**Body (JSON)**:
+```json
+{
+  "sources": [
+    "ENLACE_ICAL_DE_BOOKING",
+    "ENLACE_ICAL_DE_AIRBNB"
+  ]
+}
+```
+Esto guardará la configuración y el bot considerará instantáneamente las fechas ocupadas en esas fuentes.
