@@ -112,6 +112,17 @@ def check_apartment_availability(apt_id, check_in_str, check_out_str, config):
     for t in threads:
         t.join()
 
+    # Verify all calendars were fetched successfully
+    if len(sources) > 0 and len(ics_contents) < len(sources):
+        return {
+            "apartment": config[apt_id]['name'],
+            "check_in": check_in_str,
+            "check_out": check_out_str,
+            "available": False,
+            "reason": "Error fetching one or more calendar sources. Failsafe activated to prevent double booking.",
+            "conflicts": []
+        }
+
     # Parse all
     all_occupied_ranges = []
     for content in ics_contents:

@@ -37,9 +37,11 @@ def save_blocks(blocks):
 def generate_ics(apt_id, blocks_list, apt_name):
     """Generates an ICS file for the given apartment blocks."""
     cal = Calendar()
-    cal.add('prodid', f'-//My Apartment Manager//mxm.dk//')
+    cal.add('prodid', f'-//Parallext API//Amazon Minimalist//{apt_id}')
     cal.add('version', '2.0')
-    cal.add('X-WR-CALNAME', f'Bloqueos Manuales - {apt_name}')
+    cal.add('calscale', 'GREGORIAN')
+    cal.add('method', 'PUBLISH')
+    cal.add('X-WR-CALNAME', f'Bloqueos API - {apt_name}')
 
     for block in blocks_list:
         event = Event()
