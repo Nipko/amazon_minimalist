@@ -90,17 +90,22 @@ def query_apartment(
                 else: applicable_price = discount_map.get("1_2_guests", applicable_price)
             apt_info["price_per_night"] = applicable_price
             
-        if question_type in ("availability", "all") and check_in and check_out:
-            res = avail_checker.check_apartment_availability(apt, check_in, check_out, config)
-            apt_info["availability_status"] = "Available" if res.get("available") else "Not Available"
-            if res.get("error"):
-                apt_info["availability_error"] = res["error"]
-            if res.get("available") and num_guests and apt_info.get("price_per_night"):
-                from datetime import datetime
-                try:
-                    nights = (datetime.strptime(check_out, "%Y-%m-%d") - datetime.strptime(check_in, "%Y-%m-%d")).days
-                    apt_info["total_price_estimate_cop"] = nights * apt_info.get("price_per_night", 0)
-                except: pass
+        if question_type in ("availability", "prices", "all"):
+            if check_in and check_out:
+                res = avail_checker.check_apartment_availability(apt, check_in, check_out, config)
+                apt_info["availability_status"] = "Available" if res.get("available") else "Not Available"
+                if res.get("error"):
+                    apt_info["availability_error"] = res["error"]
+                if res.get("available") and num_guests and apt_info.get("price_per_night"):
+                    from datetime import datetime
+                    try:
+                        nights = (datetime.strptime(check_out, "%Y-%m-%d") - datetime.strptime(check_in, "%Y-%m-%d")).days
+                        apt_info["total_price_estimate_cop"] = nights * apt_info.get("price_per_night", 0)
+                    except: pass
+            else:
+                apt_info["availability_status"] = "UNKNOWN"
+                apt_info["availability_error"] = "CRITICAL: Faltan fechas exactas. DEBES responderle al cliente preguntando para qué días exactos (ingreso y salida) busca hospedaje porque sin fechas no puedes mirar el calendario ni dar precio total."
+                
         response_data[apt] = apt_info
     return response_data
 
