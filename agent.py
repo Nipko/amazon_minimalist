@@ -493,10 +493,10 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
             tool_calls = getattr(response_message, 'tool_calls', None)
             
             if tool_calls:
-                # Si el LLM adjuntó un texto junto a la petición de herramienta (ej. "Estoy verificando, regálame un segundo..."), envíalo para no perder esa interacción.
+                # Si el LLM adjuntó un texto junto a la petición de herramienta (ej. alucinaciones preliminares) lo silenciamos hacia el cliente para evitar confusiones.
                 final_text = getattr(response_message, 'content', '') or ''
                 if final_text.strip():
-                    send_chatwoot_message(account_id, conversation_id, final_text)
+                    logger.info(f"LLM preliminary text hidden from user: {final_text.strip()}")
 
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
