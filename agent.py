@@ -120,13 +120,16 @@ def query_apartment(
                 apt_info["availability_error"] = "CRITICAL: Faltan fechas exactas. DEBES responderle al cliente preguntando para qué días exactos (ingreso y salida) busca hospedaje porque sin fechas no puedes mirar el calendario ni dar precio total."
                 
         # --- PREVENT HALLUCINATIONS: Strip sales data if Not Available ---
-        if apt_info.get("availability_status") in ("OCUPADO_Y_BLOQUEADO_NO_VENDER", "UNKNOWN"):
+        avail_status = apt_info.get("availability_status")
+        if avail_status in ("OCUPADO_Y_BLOQUEADO_NO_VENDER", "UNKNOWN"):
             apt_info.pop("description", None)
             apt_info.pop("amenities", None)
             apt_info.pop("rules", None)
             apt_info.pop("price_per_night", None)
             apt_info.pop("total_price_estimate_cop", None)
-            apt_info["CRÍTICO"] = "¡NO VENDAS ESTE APARTAMENTO, ESTÁ TOTALMENTE OCUPADO O BLOQUEADO PARA ESTAS FECHAS!"
+            
+            if avail_status == "OCUPADO_Y_BLOQUEADO_NO_VENDER":
+                apt_info["CRÍTICO"] = "¡NO VENDAS ESTE APARTAMENTO, ESTÁ TOTALMENTE OCUPADO O BLOQUEADO PARA ESTAS FECHAS!"
 
         response_data[apt] = apt_info
     return response_data
