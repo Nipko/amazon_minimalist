@@ -59,11 +59,8 @@ def query_apartment(
     details = load_details()
     config = avail_checker.load_config()
     
-    # User Request: If guests are 3 or less, always show both, regardless of LLM picking one ID
-    if num_guests and isinstance(num_guests, int) and num_guests <= 3:
-        apt_ids = [k for k in details.keys() if k not in ("legal", "cross_apartment_policy")]
-    else:
-        apt_ids = [apartment_id] if apartment_id and apartment_id in details else [k for k in details.keys() if k not in ("legal", "cross_apartment_policy")]
+    # SIEMPRE consultamos AMBOS apartamentos para evitar que la IA oculte disponibilidad cruzada
+    apt_ids = [k for k in details.keys() if k not in ("legal", "cross_apartment_policy")]
         
     response_data = {}
     
