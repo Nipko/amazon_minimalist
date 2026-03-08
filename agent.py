@@ -89,23 +89,28 @@ def query_apartment(
             
         if question_type in ("availability", "prices", "all"):
             if check_in and check_out:
-                res = avail_checker.check_apartment_availability(apt, check_in, check_out, config)
-                if res.get("error", "").startswith("Invalid date format"):
-                    apt_info["availability_status"] = "UNKNOWN"
-                    apt_info["availability_error"] = "CRITICAL: Formato de fecha invalido. DEBES usar EXACTAMENTE YYYY-MM-DD. Vuelve a ejecutar la herramienta."
+                max_guests_allowed = apt_data.get("capacity", {}).get("max_guests", 99)
+                if num_guests and num_guests > max_guests_allowed:
+                    apt_info["availability_status"] = "OCUPADO_Y_BLOQUEADO_NO_VENDER"
+                    apt_info["availability_error"] = f"CRITICAL: OVERBOOKING. El apartamento solo admite un máximo de {max_guests_allowed} huéspedes. No puedes venderlo para {num_guests} bajo ninguna circunstancia."
                 else:
-                    apt_info["availability_status"] = "LIBRE" if res.get("available") else "OCUPADO_Y_BLOQUEADO_NO_VENDER"
-                    error_msg = res.get("error", res.get("reason"))
-                    if error_msg and "Error fetching" in error_msg:
-                        apt_info["availability_error"] = error_msg
-                    elif res.get("error"):
-                        apt_info["availability_error"] = res.get("error")
-                if res.get("available") and num_guests and apt_info.get("price_per_night"):
-                    from datetime import datetime
-                    try:
-                        nights = (datetime.strptime(check_out, "%Y-%m-%d") - datetime.strptime(check_in, "%Y-%m-%d")).days
-                        apt_info["total_price_estimate_cop"] = nights * apt_info.get("price_per_night", 0)
-                    except: pass
+                    res = avail_checker.check_apartment_availability(apt, check_in, check_out, config)
+                    if res.get("error", "").startswith("Invalid date format"):
+                        apt_info["availability_status"] = "UNKNOWN"
+                        apt_info["availability_error"] = "CRITICAL: Formato de fecha invalido. DEBES usar EXACTAMENTE YYYY-MM-DD. Vuelve a ejecutar la herramienta."
+                    else:
+                        apt_info["availability_status"] = "LIBRE" if res.get("available") else "OCUPADO_Y_BLOQUEADO_NO_VENDER"
+                        error_msg = res.get("error", res.get("reason"))
+                        if error_msg and "Error fetching" in error_msg:
+                            apt_info["availability_error"] = error_msg
+                        elif res.get("error"):
+                            apt_info["availability_error"] = res.get("error")
+                    if res.get("available") and num_guests and apt_info.get("price_per_night"):
+                        from datetime import datetime
+                        try:
+                            nights = (datetime.strptime(check_out, "%Y-%m-%d") - datetime.strptime(check_in, "%Y-%m-%d")).days
+                            apt_info["total_price_estimate_cop"] = nights * apt_info.get("price_per_night", 0)
+                        except: pass
             else:
                 apt_info["availability_status"] = "UNKNOWN"
                 apt_info["availability_error"] = "CRITICAL: Faltan fechas exactas. DEBES responderle al cliente preguntando para qué días exactos (ingreso y salida) busca hospedaje porque sin fechas no puedes mirar el calendario ni dar precio total."
