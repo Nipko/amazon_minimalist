@@ -236,11 +236,11 @@ LLM_TOOLS = [
                         "description": "Fecha de check-out YYYY-MM-DD"
                     },
                     "num_guests": {
-                        "type": "string",
-                        "description": "Cantidad de personas (debe ser string/texto)"
+                        "type": "integer",
+                        "description": "Cantidad de personas. Si el cliente no te lo ha dicho, DEBES interrumpir y preguntarle cuántos viajan ANTES de continuar y no llames esta herramienta. (No deduzcas ni inventes esta cifra)."
                     }
                 },
-                "required": ["question_type"]
+                "required": ["question_type", "num_guests"]
             }
         }
     },
