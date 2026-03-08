@@ -251,21 +251,20 @@ LLM_TOOLS = [
                     "total_price": {"type": "string", "description": "Precio como texto"},
                     "notes": {"type": "string"}
                 },
-                "required": ["apartment_id", "check_in", "check_out", "num_guests", "guest_name", "total_price"]
             }
         }
     },
     {
         "type": "function",
         "function": {
-            "name": "label_conversation",
-            "description": "Etiqueta el chatwoot segun la intencion: 'interesado', 'cotizando', 'reservado', 'requiere-humano'.",
+            "name": "escalate_to_human",
+            "description": "Utiliza esta herramienta EXCLUSIVAMENTE cuando el usuario ponga una queja, pida hablar con un humano, o tenga un problema fuera de tu alcance.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "labels": {"type": "array", "items": {"type": "string"}}
+                    "reason": {"type": "string", "description": "Razón para transferirlo"}
                 },
-                "required": ["labels"]
+                "required": ["reason"]
             }
         }
     }
@@ -484,15 +483,17 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                     try:
                         if function_name == "query_apartment":
                             tool_result = query_apartment(**function_args)
+                            label_conversation(conversation_id, ["cotizando"])
                         elif function_name == "include_photos":
                             function_args['account_id'] = account_id
                             function_args['conversation_id'] = conversation_id
                             tool_result = include_photos(**function_args)
                         elif function_name == "confirm_booking":
                             tool_result = confirm_booking(**function_args)
-                        elif function_name == "label_conversation":
-                            function_args['conversation_id'] = conversation_id
-                            tool_result = label_conversation(**function_args)
+                            label_conversation(conversation_id, ["reservado"])
+                        elif function_name == "escalate_to_human":
+                            label_conversation(conversation_id, ["requiere-humano"])
+                            tool_result = {"success": True, "message": "Atención humana solicitada."}
                         else:
                             tool_result = {"error": "Unknown function"}
                     except Exception as e:
@@ -514,6 +515,11 @@ def process_message(account_id: int, conversation_id: int, sender_name: str, sen
                     raise Exception("LLM response text empty. (Tool loop ended without text)")
                     
                 send_chatwoot_message(account_id, conversation_id, final_text)
+                
+                # Auto-apply "interesado" on pure text responses without major tools in the first turn
+                if turn_count == 0:
+                    label_conversation(conversation_id, ["interesado"])
+
                 break
                 
         if turn_count >= max_turns:
