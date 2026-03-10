@@ -328,6 +328,27 @@ def send_chatwoot_message(account_id: int, conversation_id: int, content: str):
             client_http.post(url, json=payload, headers=headers, timeout=5.0)
     except Exception as e:
         logger.error(f"Failed to send Chatwoot message: {e}")
+        # Notify admin of exact silent failure
+        if not SMTP_USER or not SMTP_PASSWORD: return
+        try:
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
+            import smtplib
+            
+            msg = MIMEMultipart()
+            msg['From'] = SMTP_USER
+            msg['To'] = ADMIN_EMAIL
+            msg['Subject'] = "⚠️ ALERTA CRÍTICA: Fallo publicando mensaje en WhatsApp"
+            body = f"🚨 ¡Hola Equipo!\n\nEl Agente IA generó una respuesta pero Chatwoot no respondió a tiempo o se cayó y el mensaje NO llegó al cliente (La IA se quedó en silencio).\n\nConversación ID: {conversation_id}\n\nMensaje que intentó enviar:\n{content}\n\nError Técnico:\n{e}"
+            msg.attach(MIMEText(body, 'plain'))
+            
+            server = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) if SMTP_PORT == 465 else smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            if SMTP_PORT != 465: server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+            server.quit()
+        except Exception as mail_e:
+            logger.error(f"Failed to send critical alert email: {mail_e}")
 
 def send_typing_indicator(account_id: int, conversation_id: int, status: str = "on"):
     """Toggle typing status in Chatwoot (on/off)."""
